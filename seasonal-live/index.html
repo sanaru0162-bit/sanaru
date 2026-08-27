@@ -853,6 +853,36 @@
         text-align: center;
         max-width: 330px;
       }
+      .contentTotalsSide {
+        font-size: 9px !important;
+        line-height: 1.45;
+        white-space: normal;
+      }
+      .contentTotalsMain {
+        font-size: 16px;
+        line-height: 1.55;
+        text-align: center;
+        margin-top: 8px;
+      }
+      .specialNotes {
+        margin-top: 18px;
+        border: 1px solid #eadcad;
+        border-radius: 10px;
+        background: #fffaf0;
+        padding: 13px 16px;
+        color: #66552c;
+      }
+      .specialNotes h3 {
+        margin: 0 0 7px;
+        font-size: 13px;
+        color: #654d16;
+      }
+      .specialNotes ul {
+        margin: 0;
+        padding-left: 1.4em;
+        font-size: 11px;
+        line-height: 1.8;
+      }
       .handoverStudent {
         font-size: 14px;
         margin: 0 0 18px;
@@ -921,7 +951,7 @@
         </div>
         <div class="summary">
           <div class="sumgrid">
-            <div><small>総回数</small><b id="sc">0回</b></div>
+            <div><small>コンテンツ別回数</small><b id="sc" class="contentTotalsSide">選択プランなし</b></div>
             <div><small>総時間</small><b id="sh">0時間</b></div>
             <div><small>料金合計</small><b id="sp">0円</b></div>
           </div>
@@ -975,9 +1005,8 @@
             </div>
             <div class="metrics">
               <div class="metric">
-                <div class="mlabel">総回数</div>
-                <div id="mc" class="mvalue">0回</div>
-                <div id="contentBreakdown" class="breakdown">内訳：選択プランなし</div>
+                <div class="mlabel">コンテンツ別回数</div>
+                <div id="mc" class="contentTotalsMain">選択プランなし</div>
               </div>
               <div class="metric">
                 <div class="mlabel">総時間</div>
@@ -994,6 +1023,14 @@
             <div class="note">
               ※ 使用予定教材は引継ぎシートにのみ表示します。
             </div>
+            <section class="specialNotes" aria-labelledby="specialNotesTitle">
+              <h3 id="specialNotesTitle">特記事項・ご案内</h3>
+              <ul>
+                <li>教材費は別途になる場合があります。</li>
+                <li>受講費は講座期間終了後、毎月の授業料と同時に請求します。</li>
+                <li>条件により映像授業・AI学トレに正規料金が適用される場合があります。</li>
+              </ul>
+            </section>
           </div>
         </section>
         <section id="handoverView" class="handoverView">
@@ -1219,10 +1256,10 @@
         a.forEach((x) =>
           Object.entries(x[3]).forEach(([k, v]) => (totals[k] = (totals[k] || 0) + v)),
         );
-        ["sc", "mc"].forEach((id) => ($(id).textContent = n + "回"));
-        $("contentBreakdown").textContent = Object.keys(totals).length
-          ? "内訳：" + Object.entries(totals).map(([k, v]) => `${k} ${v}回`).join("／")
-          : "内訳：選択プランなし";
+        const contentTotals = Object.keys(totals).length
+          ? Object.entries(totals).map(([k, v]) => `${k} ${v}回`).join("／")
+          : "選択プランなし";
+        ["sc", "mc"].forEach((id) => ($(id).textContent = contentTotals));
         ["sh", "mh"].forEach((id) => ($(id).textContent = n + "時間"));
         ["sp", "mp"].forEach((id) => ($(id).textContent = yen(p)));
         $("courses").innerHTML = a.length
