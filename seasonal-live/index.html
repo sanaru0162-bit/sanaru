@@ -530,7 +530,55 @@
         font-size: 11px;
         font-weight: 700;
         margin: 14px 0 14px;
+        line-height: 1.8;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      .courseDetails {
+        margin: 14px 0;
+        border: 1px solid #dce7f3;
+        border-radius: 9px;
+        background: #f8fbff;
+      }
+      .courseDetails summary {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 9px;
+        padding: 10px 12px;
+        cursor: pointer;
+        list-style: none;
+        color: #173d73;
+        font-size: 10px;
+        font-weight: 800;
+      }
+      .courseDetails summary::-webkit-details-marker { display: none; }
+      .courseDetails summary > span:first-child {
+        color: #075ed7;
         white-space: nowrap;
+      }
+      .summaryPreview {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-height: 1.65;
+      }
+      .courseDetails summary b {
+        color: #075ed7;
+        white-space: nowrap;
+      }
+      .courseDetails summary b::after { content: "＋"; margin-left: 4px; }
+      .courseDetails[open] summary b::after { content: "－"; }
+      .detailBody {
+        padding: 0 12px 12px;
+        border-top: 1px dashed #cfdeed;
+        color: #263f62;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.85;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
       }
       .break {
         font-size: 11px;
@@ -961,11 +1009,11 @@
       }
       .proposalView.summer .body {
         background-image: linear-gradient(rgba(244, 251, 255, 0.9), rgba(255, 251, 230, 0.9)),
-          url("https://files.idyllic.app/files/static/4355208");
+          url("assets/summer-landscape.png");
       }
       .proposalView.winter .body {
         background-image: linear-gradient(rgba(244, 250, 255, 0.9), rgba(237, 247, 255, 0.92)),
-          url("https://images.unsplash.com/photo-1483664852095-d6cc6870702d?auto=format&fit=crop&w=1800&q=80");
+          url("assets/winter-landscape.png");
       }
       .studentName {
         background: rgba(255, 255, 255, 0.93);
@@ -1078,6 +1126,9 @@
           print-color-adjust: exact !important;
           -webkit-print-color-adjust: exact !important;
         }
+        .courseDetails summary { display: none !important; }
+        .courseDetails .detailBody { display: block !important; border-top: 0; padding-top: 10px; }
+        .course { break-inside: avoid; page-break-inside: avoid; }
       }
     </style>
   </head>
@@ -1152,12 +1203,12 @@
             <img
               id="summerHeroImg"
               class="heroMedia summerMedia"
-              src="https://files.idyllic.app/files/static/4355208"
+              src="assets/summer-landscape.png"
               alt=""
             /><img
               id="winterHeroImg"
               class="heroMedia winterMedia"
-              src="https://images.unsplash.com/photo-1483664852095-d6cc6870702d?auto=format&fit=crop&w=1800&q=90"
+              src="assets/winter-landscape.png"
               alt=""
             />
             <div class="summerTitle">
@@ -1349,6 +1400,10 @@
         Object.entries(o).reduce((a, [k, v]) => a + (UNIT[k] || 0) * v, 0);
       const yen = (n) => n.toLocaleString("ja-JP") + "円（税込）";
       const chosen = () => Object.values(selected).map((i) => data()[i]);
+      const descriptionMarkup = (text) =>
+        text.length > 72
+          ? `<details class="courseDetails"><summary><span>講座内容</span><span class="summaryPreview">${text}</span><b>全文を表示</b></summary><div class="detailBody">${text}</div></details>`
+          : `<div class="cdesc">${text}</div>`;
       document.querySelectorAll("[data-start]").forEach(
         (b) =>
           (b.onclick = () => {
@@ -1458,7 +1513,7 @@
           ? a
               .map(
                 (x) =>
-                  `<article class="course"><div class="chead"><div class="ctitle">${x[0]}｜${x[1]}</div><span class="level">${x[2]}</span></div><div class="cdesc">${x[4]}</div><div class="break">${Object.entries(
+                  `<article class="course"><div class="chead"><div class="ctitle">${x[0]}｜${x[1]}</div><span class="level">${x[2]}</span></div>${descriptionMarkup(x[4])}<div class="break">${Object.entries(
                     x[3],
                   )
                     .map(([k, v]) => `●　${k}　　${v}回　×　${yen(UNIT[k])}`)
