@@ -531,7 +531,7 @@
         font-weight: 700;
         margin: 14px 0 14px;
         line-height: 1.8;
-        white-space: normal;
+        white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
       .courseDetails {
@@ -1036,6 +1036,7 @@
         z-index: 2;
       }
       .courses {
+        grid-template-columns: 1fr;
         background: rgba(255, 255, 255, 0.94);
         border: 1px solid #d7e1ec;
         border-radius: 18px;
@@ -1043,7 +1044,7 @@
         box-shadow: 0 13px 32px rgba(8, 43, 92, 0.12);
       }
       .course {
-        min-height: 250px;
+        min-height: 210px;
         height: auto;
         border-color: #dce5ef;
         box-shadow: 0 6px 18px rgba(8, 43, 92, 0.08);
@@ -1320,9 +1321,7 @@
         })[char]);
       const descriptionMarkup = (text) => {
         const safeText = esc(text);
-        return text.length > 72
-          ? `<details class="courseDetails"><summary><span>講座内容</span><span class="summaryPreview">${safeText}</span><b>全文を表示</b></summary><div class="detailBody">${safeText}</div></details>`
-          : `<div class="cdesc">${safeText}</div>`;
+        return `<div class="cdesc">${safeText}</div>`;
       };
       document.querySelectorAll("[data-start]").forEach(
         (b) =>
