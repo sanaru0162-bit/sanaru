@@ -890,10 +890,193 @@
         background: #f5f8fc;
         border-left: 4px solid #1767d8;
       }
+      /* Seasonal proposal design, based on the approved summer/winter references */
+      .proposalView {
+        --season-accent: #d5a321;
+        --season-soft: #edf6ff;
+        background: #edf5fb;
+        min-height: 100%;
+      }
+      .proposalView.summer {
+        --season-accent: #efa900;
+        --season-soft: #fff8dc;
+      }
+      .proposalView.winter {
+        --season-accent: #c7a040;
+        --season-soft: #eef6ff;
+      }
+      .proposalTop {
+        height: 82px;
+        background: rgba(255, 255, 255, 0.97);
+        display: grid;
+        grid-template-columns: 150px 1fr 150px;
+        align-items: center;
+        padding: 0 28px;
+        border-bottom: 1px solid #dce6f1;
+      }
+      .proposalTop h1 {
+        margin: 0;
+        text-align: center;
+        font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+        font-size: 28px;
+        letter-spacing: 0.12em;
+      }
+      .proposalTop .back,
+      .proposalTop .topPrint {
+        height: 48px;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 900;
+      }
+      .proposalTop .topPrint {
+        border: 1px solid #1969d8;
+        background: #fff;
+        color: #082f70;
+        cursor: pointer;
+      }
+      .hero {
+        height: 455px;
+        border-bottom: 5px solid var(--season-accent);
+      }
+      .hero::after {
+        background: linear-gradient(180deg, rgba(3, 39, 98, 0.02), rgba(255, 255, 255, 0.16));
+      }
+      .summerTitle > div,
+      .winterTitle > div {
+        background: rgba(255, 255, 255, 0.58);
+        border: 1px solid rgba(255, 255, 255, 0.82);
+        padding: 20px 48px 23px;
+        box-shadow: 0 14px 38px rgba(4, 40, 91, 0.12);
+      }
+      .summerTitle h2,
+      .winterTitle h2 {
+        font-size: 54px;
+      }
+      .proposalView .body {
+        padding: 22px 36px 38px;
+        background-color: rgba(244, 250, 255, 0.91);
+        background-blend-mode: screen;
+        background-size: cover;
+        background-position: center bottom;
+      }
+      .proposalView.summer .body {
+        background-image: linear-gradient(rgba(244, 251, 255, 0.9), rgba(255, 251, 230, 0.9)),
+          url("https://files.idyllic.app/files/static/4355208");
+      }
+      .proposalView.winter .body {
+        background-image: linear-gradient(rgba(244, 250, 255, 0.9), rgba(237, 247, 255, 0.92)),
+          url("https://images.unsplash.com/photo-1483664852095-d6cc6870702d?auto=format&fit=crop&w=1800&q=80");
+      }
+      .studentName {
+        background: rgba(255, 255, 255, 0.93);
+        border: 1px solid #dce6f0;
+        border-radius: 10px;
+        margin: 0 0 18px;
+        padding: 10px 16px;
+      }
+      .sectionRibbon {
+        display: inline-block;
+        min-width: 245px;
+        margin: 0 0 -1px 8px;
+        padding: 11px 24px;
+        color: #fff;
+        background: linear-gradient(135deg, #1267d7, #062e72);
+        clip-path: polygon(0 0, 86% 0, 100% 100%, 0 100%);
+        font-size: 14px;
+        font-weight: 900;
+        position: relative;
+        z-index: 2;
+      }
+      .courses {
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid #d7e1ec;
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 13px 32px rgba(8, 43, 92, 0.12);
+      }
+      .course {
+        min-height: 250px;
+        height: auto;
+        border-color: #dce5ef;
+        box-shadow: 0 6px 18px rgba(8, 43, 92, 0.08);
+      }
+      .course:after {
+        background: var(--season-accent);
+      }
+      .ctitle {
+        font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+        color: #06265e;
+      }
+      .metrics {
+        margin: 22px 0 0;
+        min-height: 154px;
+        height: auto;
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(8, 43, 92, 0.12);
+      }
+      .metric.gold .mvalue {
+        color: #d54b39;
+      }
+      .proposalMessage {
+        margin: 22px 0 0;
+        padding: 24px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid color-mix(in srgb, var(--season-accent) 45%, white);
+        border-radius: 14px;
+        font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.8;
+      }
+      .actions {
+        display: block;
+        height: auto;
+        padding: 0;
+        margin-top: 22px;
+      }
+      .action.hand {
+        width: 100%;
+        height: 62px;
+        color: #fff;
+        border: 0;
+        background: linear-gradient(135deg, #0e62cf, #062965);
+        box-shadow: 0 9px 20px rgba(6, 47, 112, 0.2);
+      }
+      .specialNotes {
+        background: rgba(255, 252, 240, 0.96);
+      }
+      @media (max-width: 900px) {
+        .proposalTop {
+          grid-template-columns: 90px 1fr 90px;
+          height: 68px;
+          padding: 0 10px;
+        }
+        .proposalTop h1 { font-size: 20px; }
+        .proposalTop .back, .proposalTop .topPrint { height: 42px; padding: 6px; }
+        .hero { height: 300px; }
+        .proposalView .body { padding: 15px; }
+        .sectionRibbon { min-width: 190px; }
+      }
       @media print {
         .hero.summer .winterMedia,
         .hero.winter .summerMedia {
           display: none !important;
+        }
+        .proposalTop {
+          display: none !important;
+        }
+        .proposalView .body {
+          background: #fff !important;
+        }
+        .sectionRibbon,
+        .courses,
+        .metrics,
+        .proposalMessage,
+        .specialNotes {
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
         }
       }
     </style>
@@ -959,7 +1142,12 @@
         </div>
       </aside>
       <main class="main">
-        <section id="proposalView" class="proposalView">
+        <section id="proposalView" class="proposalView summer">
+          <div class="proposalTop">
+            <button id="proposalBack" class="back">← 戻る</button>
+            <h1>提案書</h1>
+            <button id="print" class="topPrint">▣　印刷する</button>
+          </div>
           <div id="hero" class="hero summer">
             <img
               id="summerHeroImg"
@@ -997,11 +1185,9 @@
             <div class="studentName">
               <span>生徒名</span><strong id="proposalStudentName">未入力</strong><span>さん</span>
             </div>
-            <div class="actions">
-              <button id="print" class="action print">▣　印刷</button
-              ><button id="handover" class="action hand">
-                ▤　引継ぎシート
-              </button>
+            <div class="sectionRibbon">選択プラン</div>
+            <div id="courses" class="courses">
+              <div class="empty">左側からプランを選択してください。</div>
             </div>
             <div class="metrics">
               <div class="metric">
@@ -1017,8 +1203,8 @@
                 <div id="mp" class="mvalue">0円</div>
               </div>
             </div>
-            <div id="courses" class="courses">
-              <div class="empty">左側からプランを選択してください。</div>
+            <div class="proposalMessage">
+              上記の内容でご提案いたします。<br />ご不明な点がございましたら、お気軽にご相談ください。
             </div>
             <div class="note">
               ※ 使用予定教材は引継ぎシートにのみ表示します。
@@ -1031,6 +1217,9 @@
                 <li>条件により映像授業・AI学トレに正規料金が適用される場合があります。</li>
               </ul>
             </section>
+            <div class="actions">
+              <button id="handover" class="action hand">▤　引継ぎシートを開く</button>
+            </div>
           </div>
         </section>
         <section id="handoverView" class="handoverView">
@@ -1176,6 +1365,7 @@
         $("start").hidden = false;
         selected = {};
       };
+      $("proposalBack").onclick = () => $("back").click();
       document.querySelectorAll("[data-season]").forEach(
         (b) =>
           (b.onclick = () => {
@@ -1210,6 +1400,8 @@
         });
         $("hero").className =
           "hero " + (season === "冬期" ? "winter" : "summer");
+        $("proposalView").className =
+          "proposalView " + (season === "冬期" ? "winter" : "summer");
         renderPlans();
         update();
       }
