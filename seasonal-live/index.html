@@ -1262,7 +1262,7 @@
             </div>
             <section class="specialNotes" aria-labelledby="specialNotesTitle">
               <h3 id="specialNotesTitle">特記事項・ご案内</h3>
-              <ul>
+              <ul id="specialNotesList">
                 <li>教材費は別途になる場合があります。</li>
                 <li>受講費は講座期間終了後、毎月の授業料と同時に請求します。</li>
                 <li>条件により映像授業・AI学トレに正規料金が適用される場合があります。</li>
@@ -1286,6 +1286,7 @@
         </section>
       </main>
     </div>
+    <script src="data/plans.js"></script>
     <script>
       const $ = (id) => document.getElementById(id),
         UNIT = {
@@ -1296,114 +1297,33 @@
           基礎演習: 990,
         },
         ORDER = ["英語", "数学", "国語", "理科", "社会"];
-      const BASE = [
-        [
-          "英語",
-          "レベルアップ英文法",
-          "偏差値40前後",
-          { 映像授業: 8, 個別指導: 8 },
-          "基礎・弱点を補強し、得点力向上を目指します。",
-          ["夏期講座テキスト"],
-        ],
-        [
-          "英語",
-          "実戦長文読解",
-          "偏差値50前後",
-          { 映像授業: 8, 個別指導: 8 },
-          "長文読解の実戦力を高めます。",
-          ["夏期講座テキスト"],
-        ],
-        [
-          "英語",
-          "英語総合演習",
-          "偏差値55前後",
-          { 映像授業: 10, 個別指導: 10 },
-          "総合的な英語力を伸ばします。",
-          ["夏期講座テキスト"],
-        ],
-        [
-          "数学",
-          "補強",
-          "偏差値40前後",
-          { 個別指導: 10, AI学トレ: 10, 基礎演習: 12 },
-          "基本事項と弱点単元を重点的に補強します。",
-          ["夏期講座テキスト"],
-        ],
-        [
-          "数学",
-          "強化",
-          "偏差値50前後",
-          { 映像授業: 10, 個別指導: 10 },
-          "標準〜入試問題まで段階的に演習します。",
-          ["夏期講座テキスト"],
-        ],
-        [
-          "国語",
-          "読解力強化",
-          "偏差値45前後",
-          { 映像授業: 10, AI学トレ: 10 },
-          "文章読解と知識をバランス良く伸ばします。",
-          ["国語講習教材"],
-        ],
-        [
-          "理科",
-          "基礎固め",
-          "偏差値40前後",
-          { 映像授業: 10, AI学トレ: 10 },
-          "基礎理解を徹底し、得点の土台を作ります。",
-          ["理科講習教材"],
-        ],
-        [
-          "社会",
-          "総合演習",
-          "偏差値45前後",
-          { 映像授業: 10, 自立学習: 10 },
-          "地理・歴史を中心に入試対策を進めます。",
-          ["社会講習教材"],
-        ],
-      ];
-      const REC = [
-        [
-          "英語",
-          "私立推薦対策",
-          "推薦入試受験者向け",
-          { 個別指導: 8 },
-          "私立高校の過去問対応を行います。",
-          ["私立高校過去問"],
-        ],
-        [
-          "数学",
-          "私立推薦対策",
-          "推薦入試受験者向け",
-          { 個別指導: 8 },
-          "私立高校の過去問対応を行います。",
-          ["私立高校過去問"],
-        ],
-        [
-          "国語",
-          "私立推薦対策",
-          "推薦入試受験者向け",
-          { 映像授業: 3, AI学トレ: 9, 自立学習: 8 },
-          "入試問題の解き方を総合的に演習します。",
-          ["テーマ別入試Ⅳ"],
-        ],
-      ];
+      const { summer: SUMMER, winter: WINTER, recommendation: REC, notes: NOTES } = PLAN_CATALOG;
       let season = "",
         exam = "一般受験用",
         selected = {},
         openSubject = "英語",
         studentName = "";
       const data = () =>
-        season === "冬期" && exam === "推薦入試用" ? REC : BASE;
+        season === "冬期" && exam === "推薦入試用"
+          ? REC
+          : season === "夏期"
+            ? SUMMER
+            : WINTER;
       const reps = (o) => Object.values(o).reduce((a, b) => a + b, 0);
       const cost = (o) =>
         Object.entries(o).reduce((a, [k, v]) => a + (UNIT[k] || 0) * v, 0);
       const yen = (n) => n.toLocaleString("ja-JP") + "円（税込）";
       const chosen = () => Object.values(selected).map((i) => data()[i]);
-      const descriptionMarkup = (text) =>
-        text.length > 72
-          ? `<details class="courseDetails"><summary><span>講座内容</span><span class="summaryPreview">${text}</span><b>全文を表示</b></summary><div class="detailBody">${text}</div></details>`
-          : `<div class="cdesc">${text}</div>`;
+      const esc = (text) =>
+        String(text).replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+        })[char]);
+      const descriptionMarkup = (text) => {
+        const safeText = esc(text);
+        return text.length > 72
+          ? `<details class="courseDetails"><summary><span>講座内容</span><span class="summaryPreview">${safeText}</span><b>全文を表示</b></summary><div class="detailBody">${safeText}</div></details>`
+          : `<div class="cdesc">${safeText}</div>`;
+      };
       document.querySelectorAll("[data-start]").forEach(
         (b) =>
           (b.onclick = () => {
@@ -1457,6 +1377,12 @@
           "hero " + (season === "冬期" ? "winter" : "summer");
         $("proposalView").className =
           "proposalView " + (season === "冬期" ? "winter" : "summer");
+        const notesKey = season === "夏期"
+          ? "summer"
+          : exam === "推薦入試用" ? "recommendation" : "winter";
+        $("specialNotesList").innerHTML = (NOTES[notesKey] || [])
+          .map((note) => `<li>${esc(note)}</li>`)
+          .join("");
         renderPlans();
         update();
       }
@@ -1467,11 +1393,11 @@
           let rows = d.map((x, i) => ({ x, i })).filter((o) => o.x[0] === sub);
           if (!rows.length) return;
           let closed = openSubject !== sub;
-          h += `<div class="planGroup ${closed ? "closed" : ""}" data-sub="${sub}"><div class="planHead"><span>${sub}</span><em>${closed ? "+" : "⌃"}</em></div><div class="planOpts">`;
+          h += `<div class="planGroup ${closed ? "closed" : ""}" data-sub="${esc(sub)}"><div class="planHead"><span>${esc(sub)}</span><em>${closed ? "+" : "⌃"}</em></div><div class="planOpts">`;
           rows.forEach((o) => {
             let x = o.x,
               on = selected[sub] === o.i;
-            h += `<button class="plan ${on ? "on" : ""}" data-i="${o.i}"><span class="radio"></span><div class="pname">${x[1]}</div><div class="pmini">全${reps(x[3])}回・${reps(x[3])}時間｜目安：${x[2]}</div></button>`;
+            h += `<button class="plan ${on ? "on" : ""}" data-i="${o.i}"><span class="radio"></span><div class="pname">${esc(x[1])}</div><div class="pmini">全${reps(x[3])}回・${reps(x[3])}時間｜目安：${esc(x[2])}</div></button>`;
           });
           h += "</div></div>";
         });
@@ -1513,10 +1439,10 @@
           ? a
               .map(
                 (x) =>
-                  `<article class="course"><div class="chead"><div class="ctitle">${x[0]}｜${x[1]}</div><span class="level">${x[2]}</span></div>${descriptionMarkup(x[4])}<div class="break">${Object.entries(
+                  `<article class="course"><div class="chead"><div class="ctitle">${esc(x[0])}｜${esc(x[1])}</div><span class="level">${esc(x[2])}</span></div>${descriptionMarkup(x[4])}<div class="break">${Object.entries(
                     x[3],
                   )
-                    .map(([k, v]) => `●　${k}　　${v}回　×　${yen(UNIT[k])}`)
+                    .map(([k, v]) => `●　${esc(k)}　　${v}回　×　${yen(UNIT[k])}`)
                     .join(
                       "<br>",
                     )}</div><div class="price">${yen(cost(x[3]))}</div></article>`,
@@ -1541,7 +1467,7 @@
           chosen()
             .map(
               (x) =>
-                `<div class="hcard"><b>${x[0]}｜${x[1]}</b><p>${x[4]}</p>${x[5].map((t) => `<div class="check">□ ${t}</div>`).join("")}</div>`,
+                `<div class="hcard"><b>${esc(x[0])}｜${esc(x[1])}</b><p>${esc(x[4])}</p>${x[5].map((t) => `<div class="check">□ ${esc(t)}</div>`).join("")}</div>`,
             )
             .join("") || '<div class="empty">選択プランがありません。</div>';
       };
