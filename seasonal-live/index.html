@@ -1164,6 +1164,14 @@
       .specialNotes ul { margin: 0; }
       .actions { margin-top: 10px; }
       .action.hand { height: 50px; }
+      .dataStatus {
+        margin-top: 7px;
+        text-align: center;
+        color: #637692;
+        font-size: 9px;
+      }
+      .dataStatus.live { color: #147858; }
+      .dataStatus.fallback { color: #a46316; }
       @media (max-width: 900px) {
         .proposalTop {
           grid-template-columns: 90px 1fr 90px;
@@ -1259,6 +1267,7 @@
             <div><small>料金合計</small><b id="sp">0円</b></div>
           </div>
           <button id="confirm" class="confirm">提案書を確認する</button>
+          <div id="dataStatus" class="dataStatus">スプレッドシートを確認中...</div>
         </div>
       </aside>
       <main class="main">
@@ -1363,7 +1372,8 @@
           基礎演習: 990,
         },
         ORDER = ["英語", "数学", "国語", "理科", "社会"];
-      const { summer: SUMMER, winter: WINTER, recommendation: REC, notes: NOTES } = PLAN_CATALOG;
+      const SHEET_ID = "1EdMoSu9UDSOON1PoSTqDIWuoRvTqdF81WbzYQNI_V-k";
+      let { summer: SUMMER, winter: WINTER, recommendation: REC, notes: NOTES } = PLAN_CATALOG;
       let season = "",
         exam = "一般受験用",
         selected = {},
@@ -1388,6 +1398,73 @@
         const safeText = esc(text);
         return `<div class="cdesc">${safeText}</div>`;
       };
+      const loadSheet = (sheetName) => new Promise((resolve, reject) => {
+        const callback = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        const timer = setTimeout(() => finish(new Error("timeout")), 10000);
+        const finish = (error, value) => {
+          clearTimeout(timer);
+          delete window[callback];
+          script.remove();
+          error ? reject(error) : resolve(value);
+        };
+        window[callback] = (response) => {
+          if (response?.status === "error") finish(new Error("sheet error"));
+          else finish(null, response?.table?.rows || []);
+        };
+        script.onerror = () => finish(new Error("load error"));
+        script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&headers=1&tqx=responseHandler:${callback}`;
+        document.head.appendChild(script);
+      });
+      const cell = (row, index) => row?.c?.[index]?.v ?? "";
+      async function loadSpreadsheetCatalog() {
+        try {
+          const [planRows, noteRows] = await Promise.all([
+            loadSheet("プランマスター"),
+            loadSheet("特記事項"),
+          ]);
+          const next = { summer: [], winter: [], recommendation: [], notes: { summer: [], winter: [], recommendation: [] } };
+          planRows
+            .filter((row) => cell(row, 0) === true)
+            .sort((a, b) => Number(cell(a, 13)) - Number(cell(b, 13)))
+            .forEach((row) => {
+              const seasonValue = String(cell(row, 2));
+              const examValue = String(cell(row, 3));
+              const key = seasonValue === "夏期" ? "summer" : examValue === "推薦入試用" ? "recommendation" : "winter";
+              const counts = {};
+              [["映像授業", 7], ["個別指導", 8], ["AI学トレ", 9], ["自立学習", 10]].forEach(([name, index]) => {
+                const value = Number(cell(row, index)) || 0;
+                if (value > 0) counts[name] = value;
+              });
+              next[key].push([
+                String(cell(row, 4)), String(cell(row, 5)), String(cell(row, 6)), counts,
+                String(cell(row, 11)), String(cell(row, 12)).split(/\r?\n/).filter(Boolean),
+              ]);
+            });
+          noteRows
+            .filter((row) => cell(row, 0) === true)
+            .sort((a, b) => Number(cell(a, 2)) - Number(cell(b, 2)))
+            .forEach((row) => {
+              const key = cell(row, 1) === "夏期" ? "summer" : cell(row, 1) === "冬期推薦" ? "recommendation" : "winter";
+              next.notes[key].push(String(cell(row, 3)));
+            });
+          if (next.summer.length + next.winter.length + next.recommendation.length !== 33) throw new Error("plan count mismatch");
+          SUMMER = next.summer;
+          WINTER = next.winter;
+          REC = next.recommendation;
+          NOTES = next.notes;
+          $("dataStatus").textContent = "スプレッドシートの最新データを使用中";
+          $("dataStatus").className = "dataStatus live";
+          if (season) {
+            selected = {};
+            renderAll();
+          }
+        } catch (error) {
+          $("dataStatus").textContent = "接続できないため保存済みデータを使用中";
+          $("dataStatus").className = "dataStatus fallback";
+        }
+      }
+      loadSpreadsheetCatalog();
       document.querySelectorAll("[data-start]").forEach(
         (b) =>
           (b.onclick = () => {
