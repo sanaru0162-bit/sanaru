@@ -265,8 +265,12 @@
       }
       .sumgrid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         text-align: center;
+        row-gap: 7px;
+      }
+      .sumgrid > div:first-child {
+        grid-column: 1 / -1;
       }
       .sumgrid small {
         font-size: 8px;
@@ -911,6 +915,13 @@
         line-height: 1.55;
         text-align: center;
         margin-top: 8px;
+      }
+      .contentTotalsRow {
+        display: block;
+        white-space: nowrap;
+      }
+      .contentTotalsSeparator {
+        margin: 0 0.2em;
       }
       .specialNotes {
         margin-top: 18px;
@@ -1570,10 +1581,16 @@
         a.forEach((x) =>
           Object.entries(x[3]).forEach(([k, v]) => (totals[k] = (totals[k] || 0) + v)),
         );
-        const contentTotals = Object.keys(totals).length
-          ? Object.entries(totals).map(([k, v]) => `${k} ${v}回`).join("／")
+        const contentTotalEntries = Object.entries(totals);
+        const contentTotals = contentTotalEntries.length
+          ? Array.from({ length: Math.ceil(contentTotalEntries.length / 2) }, (_, rowIndex) => {
+              const row = contentTotalEntries.slice(rowIndex * 2, rowIndex * 2 + 2);
+              return `<span class="contentTotalsRow">${row
+                .map(([k, v]) => `<span class="contentTotalsItem">${esc(k)} ${v}回</span>`)
+                .join('<span class="contentTotalsSeparator" aria-hidden="true">／</span>')}</span>`;
+            }).join("")
           : "選択プランなし";
-        ["sc", "mc"].forEach((id) => ($(id).textContent = contentTotals));
+        ["sc", "mc"].forEach((id) => ($(id).innerHTML = contentTotals));
         ["sh", "mh"].forEach((id) => ($(id).textContent = n + "時間"));
         ["sp", "mp"].forEach((id) => ($(id).textContent = yen(p)));
         $("courses").innerHTML = a.length
