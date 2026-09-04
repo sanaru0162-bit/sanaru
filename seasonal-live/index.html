@@ -1384,6 +1384,10 @@
         },
         ORDER = ["英語", "数学", "国語", "理科", "社会"];
       const SHEET_ID = "1EdMoSu9UDSOON1PoSTqDIWuoRvTqdF81WbzYQNI_V-k";
+      const SHEET_GIDS = {
+        "プランマスター": "1117375372",
+        "特記事項": "56298684",
+      };
       let { summer: SUMMER, winter: WINTER, recommendation: REC, notes: NOTES } = PLAN_CATALOG;
       let season = "",
         exam = "一般受験用",
@@ -1409,10 +1413,10 @@
         const safeText = esc(text);
         return `<div class="cdesc">${safeText}</div>`;
       };
-      const loadSheet = (sheetName) => new Promise((resolve, reject) => {
+      const loadSheetOnce = (sheetName, useGid = false) => new Promise((resolve, reject) => {
         const callback = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const script = document.createElement("script");
-        const timer = setTimeout(() => finish(new Error("timeout")), 10000);
+        const timer = setTimeout(() => finish(new Error("timeout")), 8000);
         const finish = (error, value) => {
           clearTimeout(timer);
           delete window[callback];
@@ -1424,9 +1428,23 @@
           else finish(null, response?.table?.rows || []);
         };
         script.onerror = () => finish(new Error("load error"));
-        script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&headers=1&tqx=responseHandler:${callback}`;
+        const target = useGid
+          ? `gid=${SHEET_GIDS[sheetName]}`
+          : `sheet=${encodeURIComponent(sheetName)}`;
+        script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?${target}&headers=1&tqx=out:json;responseHandler:${callback}&_=${Date.now()}`;
         document.head.appendChild(script);
       });
+      async function loadSheet(sheetName) {
+        let lastError;
+        for (const useGid of [false, true, false]) {
+          try {
+            return await loadSheetOnce(sheetName, useGid);
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError;
+      }
       const cell = (row, index) => row?.c?.[index]?.v ?? "";
       async function loadSpreadsheetCatalog() {
         try {
@@ -1459,7 +1477,9 @@
               const key = cell(row, 1) === "夏期" ? "summer" : cell(row, 1) === "冬期推薦" ? "recommendation" : "winter";
               next.notes[key].push(String(cell(row, 3)));
             });
-          if (next.summer.length + next.winter.length + next.recommendation.length !== 33) throw new Error("plan count mismatch");
+          if (!next.summer.length || !next.winter.length || !next.recommendation.length) {
+            throw new Error("required plan group is empty");
+          }
           SUMMER = next.summer;
           WINTER = next.winter;
           REC = next.recommendation;
