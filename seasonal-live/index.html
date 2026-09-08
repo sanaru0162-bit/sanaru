@@ -51,6 +51,67 @@
       .start p {
         color: #6d7e97;
       }
+      .loadPanel,
+      .loadError {
+        margin-top: 22px;
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .loadPanel {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        background: #f2f7ff;
+        border: 1px solid #d8e7fb;
+        color: #174b8f;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .loader {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 22px;
+        border: 3px solid #c9dcf5;
+        border-top-color: #1767d8;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .loadError {
+        background: #fff6f5;
+        border: 1px solid #efc8c4;
+        color: #70241e;
+      }
+      .loadError h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      .loadError p {
+        margin: 5px 0;
+        color: #70241e;
+        line-height: 1.65;
+      }
+      .loadError details {
+        margin-top: 12px;
+        font-size: 11px;
+        color: #76514d;
+      }
+      .retryButton {
+        margin-top: 16px;
+        border: 0;
+        border-radius: 8px;
+        padding: 11px 18px;
+        background: #b33a30;
+        color: #fff;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      .retryButton:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
       .startopts {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1225,8 +1286,22 @@
       <div class="startbox">
         <div class="ey">STEP 01</div>
         <h1>中3 季節講座 提案書システム</h1>
-        <p>面談する講座を選択してください。</p>
-        <div class="startopts">
+        <p id="startInstruction">最新のプランデータを確認しています。</p>
+        <div id="loadPanel" class="loadPanel" role="status" aria-live="polite">
+          <span class="loader" aria-hidden="true"></span>
+          <span>スプレッドシートから最新データを読み込んでいます…</span>
+        </div>
+        <div id="loadError" class="loadError" role="alert" hidden>
+          <h2>最新のプランデータを取得できませんでした</h2>
+          <p>誤った内容で提案しないため、アプリを停止しています。</p>
+          <p>インターネット接続を確認して、もう一度お試しください。</p>
+          <details>
+            <summary>エラーの詳細</summary>
+            <div id="loadErrorDetail"></div>
+          </details>
+          <button id="retryLoad" class="retryButton" type="button">最新データを再読み込み</button>
+        </div>
+        <div id="startopts" class="startopts" hidden>
           <button class="startbtn" data-start="夏期">
             <b>☀ 夏期講座</b><span>夏期講座のプランを提案する</span></button
           ><button class="startbtn" data-start="冬期">
@@ -1372,7 +1447,6 @@
         </section>
       </main>
     </div>
-    <script src="data/plans.js"></script>
     <script>
       const $ = (id) => document.getElementById(id),
         UNIT = {
@@ -1387,7 +1461,11 @@
         "プランマスター": "1117375372",
         "特記事項": "56298684",
       };
-      let { summer: SUMMER, winter: WINTER, recommendation: REC, notes: NOTES } = PLAN_CATALOG;
+      let SUMMER = [],
+        WINTER = [],
+        REC = [],
+        NOTES = { summer: [], winter: [], recommendation: [] },
+        catalogReady = false;
       let season = "",
         exam = "一般受験用",
         selected = {},
@@ -1415,7 +1493,10 @@
       const loadSheetOnce = (sheetName, useGid = false) => new Promise((resolve, reject) => {
         const callback = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const script = document.createElement("script");
-        const timer = setTimeout(() => finish(new Error("timeout")), 8000);
+        const timer = setTimeout(
+          () => finish(new Error(`${sheetName}: 8秒以内に応答がありませんでした`)),
+          8000,
+        );
         const finish = (error, value) => {
           clearTimeout(timer);
           delete window[callback];
@@ -1423,10 +1504,15 @@
           error ? reject(error) : resolve(value);
         };
         window[callback] = (response) => {
-          if (response?.status === "error") finish(new Error("sheet error"));
-          else finish(null, response?.table?.rows || []);
+          if (response?.status === "error") {
+            const message = response?.errors?.map((item) => item.detailed_message || item.message).filter(Boolean).join(" / ");
+            finish(new Error(`${sheetName}: Google Sheetsからエラーが返されました${message ? `（${message}）` : ""}`));
+          } else {
+            finish(null, response?.table?.rows || []);
+          }
         };
-        script.onerror = () => finish(new Error("load error"));
+        script.onerror = () =>
+          finish(new Error(`${sheetName}: Google Sheetsへの通信がブラウザまたはネットワークで遮断されました`));
         const target = useGid
           ? `gid=${SHEET_GIDS[sheetName]}`
           : `sheet=${encodeURIComponent(sheetName)}`;
@@ -1434,18 +1520,52 @@
         document.head.appendChild(script);
       });
       async function loadSheet(sheetName) {
-        let lastError;
-        for (const useGid of [false, true, false]) {
+        const errors = [];
+        for (const useGid of [false, true]) {
           try {
             return await loadSheetOnce(sheetName, useGid);
           } catch (error) {
-            lastError = error;
+            errors.push(error.message);
           }
         }
-        throw lastError;
+        throw new Error(errors.join(" / "));
       }
       const cell = (row, index) => row?.c?.[index]?.v ?? "";
+      const setLoadState = (state, detail = "") => {
+        const loading = state === "loading";
+        const ready = state === "ready";
+        $("loadPanel").hidden = !loading;
+        $("loadError").hidden = state !== "error";
+        $("startopts").hidden = !ready;
+        $("retryLoad").disabled = loading;
+        $("startInstruction").textContent = ready
+          ? "面談する講座を選択してください。"
+          : loading
+            ? "最新のプランデータを確認しています。"
+            : "データを取得できるまで講座は選択できません。";
+        if (state === "error") $("loadErrorDetail").textContent = detail;
+      };
+      const validateCatalog = (catalog) => {
+        const groups = [
+          ["夏期", catalog.summer],
+          ["冬期一般", catalog.winter],
+          ["冬期推薦", catalog.recommendation],
+        ];
+        groups.forEach(([label, rows]) => {
+          if (!rows.length) throw new Error(`${label}の有効なプランが0件です`);
+          rows.forEach((row, index) => {
+            if (!ORDER.includes(row[0])) throw new Error(`${label} ${index + 1}行目の教科が不正です`);
+            if (!row[1]) throw new Error(`${label} ${index + 1}行目のプラン名が空です`);
+            if (!Object.keys(row[3]).length) throw new Error(`${label} ${row[0]}・${row[1]}の受講回数がすべて0です`);
+          });
+        });
+        ["summer", "winter", "recommendation"].forEach((key) => {
+          if (!catalog.notes[key].length) throw new Error(`${key}の特記事項が0件です`);
+        });
+      };
       async function loadSpreadsheetCatalog() {
+        catalogReady = false;
+        setLoadState("loading");
         try {
           const [planRows, noteRows] = await Promise.all([
             loadSheet("プランマスター"),
@@ -1455,13 +1575,23 @@
           planRows
             .filter((row) => cell(row, 0) === true)
             .sort((a, b) => Number(cell(a, 13)) - Number(cell(b, 13)))
-            .forEach((row) => {
+            .forEach((row, rowIndex) => {
               const seasonValue = String(cell(row, 2));
               const examValue = String(cell(row, 3));
+              if (!["夏期", "冬期"].includes(seasonValue)) {
+                throw new Error(`プランマスター ${rowIndex + 2}行目の季節区分が不正です`);
+              }
+              if (seasonValue === "冬期" && !["一般受験用", "推薦入試用"].includes(examValue)) {
+                throw new Error(`プランマスター ${rowIndex + 2}行目の受講区分が不正です`);
+              }
               const key = seasonValue === "夏期" ? "summer" : examValue === "推薦入試用" ? "recommendation" : "winter";
               const counts = {};
               [["映像授業", 7], ["個別指導", 8], ["AI学トレ", 9], ["自立学習", 10]].forEach(([name, index]) => {
-                const value = Number(cell(row, index)) || 0;
+                const rawValue = cell(row, index);
+                const value = rawValue === "" ? 0 : Number(rawValue);
+                if (!Number.isFinite(value) || value < 0) {
+                  throw new Error(`プランマスター ${rowIndex + 2}行目の${name}が不正です`);
+                }
                 if (value > 0) counts[name] = value;
               });
               next[key].push([
@@ -1476,28 +1606,31 @@
               const key = cell(row, 1) === "夏期" ? "summer" : cell(row, 1) === "冬期推薦" ? "recommendation" : "winter";
               next.notes[key].push(String(cell(row, 3)));
             });
-          if (!next.summer.length || !next.winter.length || !next.recommendation.length) {
-            throw new Error("required plan group is empty");
-          }
+          validateCatalog(next);
           SUMMER = next.summer;
           WINTER = next.winter;
           REC = next.recommendation;
           NOTES = next.notes;
-          $("dataStatus").textContent = "スプレッドシートの最新データを使用中";
+          catalogReady = true;
+          const loadedAt = new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+          $("dataStatus").textContent = `スプレッドシートの最新データを使用中（${loadedAt}取得）`;
           $("dataStatus").className = "dataStatus live";
-          if (season) {
-            selected = {};
-            renderAll();
-          }
+          setLoadState("ready");
         } catch (error) {
-          $("dataStatus").textContent = "接続できないため保存済みデータを使用中";
+          catalogReady = false;
+          $("app").hidden = true;
+          $("start").hidden = false;
+          $("dataStatus").textContent = "最新データを取得できないため停止中";
           $("dataStatus").className = "dataStatus fallback";
+          setLoadState("error", error?.message || "不明なエラー");
         }
       }
+      $("retryLoad").onclick = () => loadSpreadsheetCatalog();
       loadSpreadsheetCatalog();
       document.querySelectorAll("[data-start]").forEach(
         (b) =>
           (b.onclick = () => {
+            if (!catalogReady) return;
             season = b.dataset.start;
             exam = "一般受験用";
             selected = {};
