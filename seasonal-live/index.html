@@ -1449,13 +1449,8 @@
     </div>
     <script>
       const $ = (id) => document.getElementById(id),
-        UNIT = {
-          映像授業: 1320,
-          個別指導: 2640,
-          AI学トレ: 880,
-          自立学習: 1650,
-        },
         ORDER = ["英語", "数学", "国語", "理科", "社会"];
+      let UNIT = {};
       const DATA_API_URL = "https://script.google.com/macros/s/AKfycbx8HtKlfQUcd8VnCfhHeFV_G0tH19maIKkzm8RAeUwvx1mVyjAfH3q9C0kALQx_MEjGnA/exec";
       let SUMMER = [],
         WINTER = [],
@@ -1475,7 +1470,10 @@
             : WINTER;
       const reps = (o) => Object.values(o).reduce((a, b) => a + b, 0);
       const cost = (o) =>
-        Object.entries(o).reduce((a, [k, v]) => a + (UNIT[k] || 0) * v, 0);
+        Object.entries(o).reduce((a, [k, v]) => {
+          if (!Number.isFinite(UNIT[k])) throw new Error(`${k}の単価を取得できません`);
+          return a + UNIT[k] * v;
+        }, 0);
       const yen = (n) => n.toLocaleString("ja-JP") + "円（税込）";
       const chosen = () => Object.values(selected).map((i) => data()[i]);
       const esc = (text) =>
@@ -1507,7 +1505,11 @@
             finish(new Error(response?.error || "最新データAPIから正常な応答がありませんでした"));
             return;
           }
-          if (!Array.isArray(response.planRows) || !Array.isArray(response.noteRows)) {
+          if (
+            !Array.isArray(response.planRows) ||
+            !Array.isArray(response.noteRows) ||
+            !Array.isArray(response.unitRows)
+          ) {
             finish(new Error("最新データAPIの応答形式が不正です"));
             return;
           }
@@ -1556,8 +1558,9 @@
         setLoadState("loading");
         try {
           const response = await loadDataApi();
-          const { planRows, noteRows } = response;
+          const { planRows, noteRows, unitRows } = response;
           const next = { summer: [], winter: [], recommendation: [], notes: { summer: [], winter: [], recommendation: [] } };
+          const nextUnits = {};
           planRows
             .filter((row) => cell(row, 0) === true)
             .sort((a, b) => Number(cell(a, 13)) - Number(cell(b, 13)))
@@ -1592,7 +1595,28 @@
               const key = cell(row, 1) === "夏期" ? "summer" : cell(row, 1) === "冬期推薦" ? "recommendation" : "winter";
               next.notes[key].push(String(cell(row, 3)));
             });
+          unitRows
+            .filter((row) => cell(row, 0) === true)
+            .sort((a, b) => Number(cell(a, 3)) - Number(cell(b, 3)))
+            .forEach((row, rowIndex) => {
+              const name = String(cell(row, 1)).trim();
+              const amount = Number(cell(row, 2));
+              if (!name) throw new Error(`料金単価 ${rowIndex + 2}行目のコンテンツ名が空です`);
+              if (!Number.isFinite(amount) || amount < 0) {
+                throw new Error(`料金単価 ${rowIndex + 2}行目の単価が不正です`);
+              }
+              if (Object.prototype.hasOwnProperty.call(nextUnits, name)) {
+                throw new Error(`料金単価の${name}が重複しています`);
+              }
+              nextUnits[name] = amount;
+            });
+          ["映像授業", "個別指導", "AI学トレ", "自立学習"].forEach((name) => {
+            if (!Object.prototype.hasOwnProperty.call(nextUnits, name)) {
+              throw new Error(`料金単価に${name}がありません`);
+            }
+          });
           validateCatalog(next);
+          UNIT = nextUnits;
           SUMMER = next.summer;
           WINTER = next.winter;
           REC = next.recommendation;
