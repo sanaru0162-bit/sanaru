@@ -1456,11 +1456,7 @@
           自立学習: 1650,
         },
         ORDER = ["英語", "数学", "国語", "理科", "社会"];
-      const SHEET_ID = "1EdMoSu9UDSOON1PoSTqDIWuoRvTqdF81WbzYQNI_V-k";
-      const SHEET_GIDS = {
-        "プランマスター": "1117375372",
-        "特記事項": "56298684",
-      };
+      const DATA_API_URL = "https://script.google.com/macros/s/AKfycbx8HtKlfQUcd8VnCfhHeFV_G0tH19maIKkzm8RAeUwvx1mVyjAfH3q9C0kALQx_MEjGnA/exec";
       let SUMMER = [],
         WINTER = [],
         REC = [],
@@ -1490,47 +1486,39 @@
         const safeText = esc(text);
         return `<div class="cdesc">${safeText}</div>`;
       };
-      const loadSheetOnce = (sheetName, useGid = false) => new Promise((resolve, reject) => {
-        const callback = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const loadDataApi = () => new Promise((resolve, reject) => {
+        const callback = `seasonalDataCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const script = document.createElement("script");
-        const timer = setTimeout(
-          () => finish(new Error(`${sheetName}: 8秒以内に応答がありませんでした`)),
-          8000,
-        );
+        let completed = false;
         const finish = (error, value) => {
+          if (completed) return;
+          completed = true;
           clearTimeout(timer);
           delete window[callback];
           script.remove();
           error ? reject(error) : resolve(value);
         };
+        const timer = setTimeout(
+          () => finish(new Error("最新データAPIが12秒以内に応答しませんでした")),
+          12000,
+        );
         window[callback] = (response) => {
-          if (response?.status === "error") {
-            const message = response?.errors?.map((item) => item.detailed_message || item.message).filter(Boolean).join(" / ");
-            finish(new Error(`${sheetName}: Google Sheetsからエラーが返されました${message ? `（${message}）` : ""}`));
-          } else {
-            finish(null, response?.table?.rows || []);
+          if (!response || response.ok !== true) {
+            finish(new Error(response?.error || "最新データAPIから正常な応答がありませんでした"));
+            return;
           }
+          if (!Array.isArray(response.planRows) || !Array.isArray(response.noteRows)) {
+            finish(new Error("最新データAPIの応答形式が不正です"));
+            return;
+          }
+          finish(null, response);
         };
         script.onerror = () =>
-          finish(new Error(`${sheetName}: Google Sheetsへの通信がブラウザまたはネットワークで遮断されました`));
-        const target = useGid
-          ? `gid=${SHEET_GIDS[sheetName]}`
-          : `sheet=${encodeURIComponent(sheetName)}`;
-        script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?${target}&headers=1&tqx=out:json;responseHandler:${callback}&_=${Date.now()}`;
+          finish(new Error("最新データAPIへの通信がブラウザまたはネットワークで遮断されました"));
+        script.src = `${DATA_API_URL}?callback=${callback}&_=${Date.now()}`;
         document.head.appendChild(script);
       });
-      async function loadSheet(sheetName) {
-        const errors = [];
-        for (const useGid of [false, true]) {
-          try {
-            return await loadSheetOnce(sheetName, useGid);
-          } catch (error) {
-            errors.push(error.message);
-          }
-        }
-        throw new Error(errors.join(" / "));
-      }
-      const cell = (row, index) => row?.c?.[index]?.v ?? "";
+      const cell = (row, index) => row?.[index] ?? "";
       const setLoadState = (state, detail = "") => {
         const loading = state === "loading";
         const ready = state === "ready";
@@ -1567,10 +1555,8 @@
         catalogReady = false;
         setLoadState("loading");
         try {
-          const [planRows, noteRows] = await Promise.all([
-            loadSheet("プランマスター"),
-            loadSheet("特記事項"),
-          ]);
+          const response = await loadDataApi();
+          const { planRows, noteRows } = response;
           const next = { summer: [], winter: [], recommendation: [], notes: { summer: [], winter: [], recommendation: [] } };
           planRows
             .filter((row) => cell(row, 0) === true)
