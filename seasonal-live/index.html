@@ -1576,7 +1576,7 @@
             return;
           }
           if (response.region !== region && !(region === "aichi" && !response.region)) {
-            finish(new Error("選択した地域と取得データの地域が一致しません"));
+            finish(new Error(`選択地域: ${regionLabel}／API応答: ${response.region || "地域情報なし"}`));
             return;
           }
           if (
