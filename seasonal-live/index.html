@@ -1519,7 +1519,7 @@
       const $ = (id) => document.getElementById(id),
         ORDER = ["英語", "数学", "国語", "理科", "社会"];
       let UNIT = {};
-      const DATA_API_URL = "https://script.google.com/macros/s/AKfycbwc5ZbnE3Y94WTFTarReX-pVQpsN24pk7TowTlgl0sYcwBvcL1KLLmhFrV-FFMEQ6kDXQ/exec";
+      const DATA_API_URL = "https://script.google.com/macros/s/AKfycbwXqw5GdB1svxNMVDF3FbYnycgkc62hm1jqBe9fbmHkPU2d-SrKCsfbkHCikI3jpiyfJA/exec";
       let SUMMER = [],
         WINTER = [],
         REC = [],
@@ -1575,7 +1575,7 @@
             finish(new Error(response?.error || "最新データAPIから正常な応答がありませんでした"));
             return;
           }
-          if (response.region !== region && !(region === "aichi" && !response.region)) {
+          if (response.region !== region) {
             finish(new Error(`選択地域: ${regionLabel}／API応答: ${response.region || "地域情報なし"}`));
             return;
           }
