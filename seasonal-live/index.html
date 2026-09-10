@@ -1575,7 +1575,7 @@
             finish(new Error(response?.error || "最新データAPIから正常な応答がありませんでした"));
             return;
           }
-          if (response.region !== region) {
+          if (response.region !== region && !(region === "aichi" && !response.region)) {
             finish(new Error("選択した地域と取得データの地域が一致しません"));
             return;
           }
