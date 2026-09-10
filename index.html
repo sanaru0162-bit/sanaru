@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>学習アドバイス診断</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <p class="eyebrow">Student Learning Advisor</p>
+        <h1>10項目アンケートから、今のあなたに合う学習アドバイスを提案します</h1>
+        <p class="lead">
+          現在・過去・未来、成績、性格、生活、部活、家庭、学校、友人について回答すると、
+          優先順位つきの学習プランを自動で作成します。
+        </p>
+      </section>
+
+      <form id="surveyForm" class="card" aria-describedby="formHelp">
+        <div class="form-header">
+          <h2>学習状況アンケート</h2>
+          <p id="formHelp">各項目について、もっとも近い選択肢を選んでください。</p>
+        </div>
+
+        <div id="questionList" class="question-list"></div>
+
+        <div class="actions">
+          <button type="submit">アドバイスを作成する</button>
+          <button type="button" class="secondary" id="resetButton">リセット</button>
+        </div>
+      </form>
+
+      <section id="result" class="card result" aria-live="polite" hidden>
+        <div class="result-header">
+          <p class="eyebrow">Personal Advice</p>
+          <h2>あなたへの学習アドバイス</h2>
+          <p id="resultSummary"></p>
+        </div>
+        <div id="adviceList" class="advice-list"></div>
+        <div class="plan-box">
+          <h3>今日から7日間の行動プラン</h3>
+          <ol id="weeklyPlan"></ol>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
