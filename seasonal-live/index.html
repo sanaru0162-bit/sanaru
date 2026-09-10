@@ -136,6 +136,28 @@
         color: #6d7f99;
         margin-top: 4px;
       }
+      .regionBadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        background: #eef5ff;
+        color: #135dbd;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .regionBack {
+        margin-top: 18px;
+        border: 0;
+        background: transparent;
+        color: #1767d8;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        padding: 4px 0;
+      }
       .app {
         width: 1536px;
         min-height: 1024px;
@@ -1308,10 +1330,26 @@
     </style>
   </head>
   <body>
-    <section id="start" class="start">
+    <section id="regionStart" class="start">
       <div class="startbox">
         <div class="ey">STEP 01</div>
         <h1>中3 季節講座 提案書システム</h1>
+        <p>利用する地域を選択してください。選択後、その地域のスプレッドシートから最新データを読み込みます。</p>
+        <div class="startopts">
+          <button class="startbtn" data-region="aichi">
+            <b>愛知版</b><span>愛知県向けのプラン・料金を読み込む</span>
+          </button>
+          <button class="startbtn" data-region="shizuoka">
+            <b>静岡版</b><span>静岡県向けのプラン・料金を読み込む</span>
+          </button>
+        </div>
+      </div>
+    </section>
+    <section id="start" class="start" hidden>
+      <div class="startbox">
+        <div class="ey">STEP 02</div>
+        <h1>講座を選択</h1>
+        <div id="selectedRegion" class="regionBadge"></div>
         <p id="startInstruction">最新のプランデータを確認しています。</p>
         <div id="loadPanel" class="loadPanel" role="status" aria-live="polite">
           <span class="loader" aria-hidden="true"></span>
@@ -1334,12 +1372,13 @@
             <b>❄ 冬期講座</b><span>冬期講座のプランを提案する</span>
           </button>
         </div>
+        <button id="regionBack" class="regionBack" type="button">← 地域選択へ戻る</button>
       </div>
     </section>
     <div id="app" class="app" hidden>
       <aside class="side">
         <div class="brand">中3 季節講座 提案書システム</div>
-        <div class="brandsub">面談しながらプランを比較・選択</div>
+        <div class="brandsub"><span id="appRegionLabel"></span>｜面談しながらプランを比較・選択</div>
         <button id="back" class="back">← 戻る</button>
         <div class="studentField">
           <label for="studentNameInput">生徒名</label>
@@ -1486,7 +1525,9 @@
         REC = [],
         NOTES = { summer: [], winter: [], recommendation: [] },
         catalogReady = false;
-      let season = "",
+      let region = "",
+        regionLabel = "",
+        season = "",
         exam = "一般受験用",
         selected = {},
         openSubject = "英語",
@@ -1534,6 +1575,10 @@
             finish(new Error(response?.error || "最新データAPIから正常な応答がありませんでした"));
             return;
           }
+          if (response.region !== region) {
+            finish(new Error("選択した地域と取得データの地域が一致しません"));
+            return;
+          }
           if (
             !Array.isArray(response.planRows) ||
             !Array.isArray(response.noteRows) ||
@@ -1546,7 +1591,7 @@
         };
         script.onerror = () =>
           finish(new Error("最新データAPIへの通信がブラウザまたはネットワークで遮断されました"));
-        script.src = `${DATA_API_URL}?callback=${callback}&_=${Date.now()}`;
+        script.src = `${DATA_API_URL}?callback=${callback}&region=${encodeURIComponent(region)}&_=${Date.now()}`;
         document.head.appendChild(script);
       });
       const cell = (row, index) => row?.[index] ?? "";
@@ -1583,6 +1628,7 @@
         });
       };
       async function loadSpreadsheetCatalog() {
+        if (!region) return;
         catalogReady = false;
         setLoadState("loading");
         try {
@@ -1652,7 +1698,7 @@
           NOTES = next.notes;
           catalogReady = true;
           const loadedAt = new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-          $("dataStatus").textContent = `スプレッドシートの最新データを使用中（${loadedAt}取得）`;
+          $("dataStatus").textContent = `${regionLabel}スプレッドシートの最新データを使用中（${loadedAt}取得）`;
           $("dataStatus").className = "dataStatus live";
           setLoadState("ready");
         } catch (error) {
@@ -1665,7 +1711,30 @@
         }
       }
       $("retryLoad").onclick = () => loadSpreadsheetCatalog();
-      loadSpreadsheetCatalog();
+      document.querySelectorAll("[data-region]").forEach((button) => {
+        button.onclick = () => {
+          region = button.dataset.region;
+          regionLabel = region === "aichi" ? "愛知版" : "静岡版";
+          $("selectedRegion").textContent = regionLabel;
+          $("regionStart").hidden = true;
+          $("start").hidden = false;
+          loadSpreadsheetCatalog();
+        };
+      });
+      $("regionBack").onclick = () => {
+        region = "";
+        regionLabel = "";
+        catalogReady = false;
+        UNIT = {};
+        SUMMER = [];
+        WINTER = [];
+        REC = [];
+        NOTES = { summer: [], winter: [], recommendation: [] };
+        selected = {};
+        $("start").hidden = true;
+        $("app").hidden = true;
+        $("regionStart").hidden = false;
+      };
       document.querySelectorAll("[data-start]").forEach(
         (b) =>
           (b.onclick = () => {
@@ -1675,6 +1744,7 @@
             selected = {};
             $("start").hidden = true;
             $("app").hidden = false;
+            $("appRegionLabel").textContent = regionLabel;
             renderAll();
           }),
       );
