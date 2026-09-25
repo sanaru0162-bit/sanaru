@@ -1334,15 +1334,47 @@
       <div class="startbox">
         <div class="ey">STEP 01</div>
         <h1>中3 季節講座 提案書システム</h1>
-        <p>利用する地域を選択してください。選択後、その地域のスプレッドシートから最新データを読み込みます。</p>
+        <p>利用する地域を選択してください。選択後、その地域・区分のスプレッドシートから最新データを読み込みます。</p>
         <div class="startopts">
           <button class="startbtn" data-region="aichi">
-            <b>愛知版</b><span>愛知県向けのプラン・料金を読み込む</span>
+            <b>愛知版</b><span>尾張・三河から選択する</span>
           </button>
           <button class="startbtn" data-region="shizuoka">
             <b>静岡版</b><span>静岡県向けのプラン・料金を読み込む</span>
           </button>
         </div>
+      </div>
+    </section>
+    <section id="aichiAreaStart" class="start" hidden>
+      <div class="startbox">
+        <div class="ey">STEP 02</div>
+        <h1>愛知版｜エリアを選択</h1>
+        <p>利用するエリアを選択してください。</p>
+        <div class="startopts">
+          <button class="startbtn" data-aichi-area="owari">
+            <b>尾張</b><span>尾張版のプラン・料金を読み込む</span>
+          </button>
+          <button class="startbtn" data-aichi-area="mikawa">
+            <b>三河</b><span>個別指導の有無を選択する</span>
+          </button>
+        </div>
+        <button id="aichiAreaBack" class="regionBack" type="button">← 地域選択へ戻る</button>
+      </div>
+    </section>
+    <section id="mikawaTypeStart" class="start" hidden>
+      <div class="startbox">
+        <div class="ey">STEP 03</div>
+        <h1>愛知版｜三河</h1>
+        <p>個別指導の有無を選択してください。</p>
+        <div class="startopts">
+          <button class="startbtn" data-mikawa-type="with">
+            <b>個別指導あり</b><span>個別指導あり用のプラン・料金を読み込む</span>
+          </button>
+          <button class="startbtn" data-mikawa-type="without">
+            <b>個別指導なし</b><span>個別指導なし用のプラン・料金を読み込む</span>
+          </button>
+        </div>
+        <button id="mikawaTypeBack" class="regionBack" type="button">← エリア選択へ戻る</button>
       </div>
     </section>
     <section id="start" class="start" hidden>
@@ -1711,17 +1743,7 @@
         }
       }
       $("retryLoad").onclick = () => loadSpreadsheetCatalog();
-      document.querySelectorAll("[data-region]").forEach((button) => {
-        button.onclick = () => {
-          region = button.dataset.region;
-          regionLabel = region === "aichi" ? "愛知版" : "静岡版";
-          $("selectedRegion").textContent = regionLabel;
-          $("regionStart").hidden = true;
-          $("start").hidden = false;
-          loadSpreadsheetCatalog();
-        };
-      });
-      $("regionBack").onclick = () => {
+      const resetCatalog = () => {
         region = "";
         regionLabel = "";
         catalogReady = false;
@@ -1733,6 +1755,58 @@
         selected = {};
         $("start").hidden = true;
         $("app").hidden = true;
+      };
+      const openCatalog = (source, label) => {
+        region = source;
+        regionLabel = label;
+        $("selectedRegion").textContent = regionLabel;
+        $("regionStart").hidden = true;
+        $("aichiAreaStart").hidden = true;
+        $("mikawaTypeStart").hidden = true;
+        $("start").hidden = false;
+        loadSpreadsheetCatalog();
+      };
+      document.querySelectorAll("[data-region]").forEach((button) => {
+        button.onclick = () => {
+          if (button.dataset.region === "aichi") {
+            $("regionStart").hidden = true;
+            $("aichiAreaStart").hidden = false;
+            return;
+          }
+          openCatalog("shizuoka", "静岡版");
+        };
+      });
+      document.querySelectorAll("[data-aichi-area]").forEach((button) => {
+        button.onclick = () => {
+          if (button.dataset.aichiArea === "owari") {
+            openCatalog("owari", "愛知版・尾張");
+            return;
+          }
+          $("aichiAreaStart").hidden = true;
+          $("mikawaTypeStart").hidden = false;
+        };
+      });
+      document.querySelectorAll("[data-mikawa-type]").forEach((button) => {
+        button.onclick = () => {
+          const hasIndividual = button.dataset.mikawaType === "with";
+          openCatalog(
+            hasIndividual ? "mikawa_with" : "mikawa_without",
+            hasIndividual ? "愛知版・三河・個別指導あり" : "愛知版・三河・個別指導なし",
+          );
+        };
+      });
+      $("aichiAreaBack").onclick = () => {
+        $("aichiAreaStart").hidden = true;
+        $("regionStart").hidden = false;
+      };
+      $("mikawaTypeBack").onclick = () => {
+        $("mikawaTypeStart").hidden = true;
+        $("aichiAreaStart").hidden = false;
+      };
+      $("regionBack").onclick = () => {
+        resetCatalog();
+        $("aichiAreaStart").hidden = true;
+        $("mikawaTypeStart").hidden = true;
         $("regionStart").hidden = false;
       };
       document.querySelectorAll("[data-start]").forEach(
