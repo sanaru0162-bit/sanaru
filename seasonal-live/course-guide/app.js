@@ -5,7 +5,7 @@
   const schools = [{id:'elementary',name:'小学生',prefix:'小',count:6},{id:'middle',name:'中学生',prefix:'中',count:3},{id:'high',name:'高校生',prefix:'高',count:3}];
   const config = window.COURSE_CONFIG;
   const enabled = (v) => v === true || v === 1 || String(v).toLowerCase() === 'true';
-  let data = window.COURSE_DATA;
+  let data = config.apiUrl ? null : window.COURSE_DATA;
   let selected = new Set(['小4','小5','小6']);
   let canPrint = false, backgroundReady = false, backgroundFailed = false, loading = false, failed = false, requestId = 0;
   const currency = new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0});
@@ -104,20 +104,23 @@
   }
   function loadApi(){
     if(!config.apiUrl)return;
+    if($('region').value!=='owari'){++requestId;loading=false;failed=false;data=null;render();return;}
+    const region=$('region').value;
     const id=++requestId,callback=`courseGuide_${Date.now()}_${id}`,script=document.createElement('script');
     loading=true;failed=false;render();
     let timer;
     const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
-    const fail=()=>{cleanup();if(id!==requestId)return;loading=false;failed=true;data=null;render();};
+    const fail=()=>{cleanup();if(id!==requestId)return;loading=false;failed=true;data=null;$('source-info').textContent='最新データを取得できません。60秒後に再接続します。';render();};
     window[callback]=(response)=>{
       cleanup();if(id!==requestId)return;
-      if(!response?.ok||!Array.isArray(response.planRows)||!Array.isArray(response.unitRows)||!Array.isArray(response.noteRows)){fail();return;}
-      data=response;loading=false;failed=false;render();$('source-info').textContent=`最終更新：${new Date().toLocaleString('ja-JP')}`;
+      if(response?.ok!==true||response.region!==region||!Array.isArray(response.planRows)||!Array.isArray(response.unitRows)||!Array.isArray(response.noteRows)){fail();return;}
+      data=response;loading=false;failed=false;render();$('source-info').textContent=`シート取得日時：${new Date(response.generatedAt).toLocaleString('ja-JP')}`;
     };
     timer=setTimeout(fail,15000);script.onerror=fail;
-    const url=new URL(config.apiUrl);url.searchParams.set('callback',callback);url.searchParams.set('region',$('region').value);url.searchParams.set('_',Date.now());script.src=url.href;document.head.append(script);
+    const url=new URL(config.apiUrl);url.searchParams.set('callback',callback);url.searchParams.set('region',region);url.searchParams.set('_',Date.now());script.src=url.href;document.head.append(script);
   }
-  buildGrades();$('source-info').textContent=`${data.sourceSheet}の${data.capturedAt}取得データを使用しています。`;
+  buildGrades();$('source-info').textContent=config.apiUrl?'最新データを取得しています。':`${data.sourceSheet}の${data.capturedAt}取得データを使用しています。`;
+  $('refresh-info').textContent=config.apiUrl?'ページを開くと最新データを取得し、60秒ごとに更新します。特記事項は紙面の注意事項に反映します。':'取得済みデータを使用しています。シート変更の自動反映は準備中です。';
   $('season').addEventListener('change',render);$('region').addEventListener('change',()=>config.apiUrl?loadApi():render());
   $('print').addEventListener('click',()=>{render();if(canPrint)window.print();});
   window.addEventListener('resize',()=>{resize();render();});
