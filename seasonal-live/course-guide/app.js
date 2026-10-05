@@ -92,11 +92,8 @@
       });
       $('paper-meta').textContent=`${label}　${[...selected].join('・')}　／ デモ用`;
       $('notes').replaceChildren();
-      data.noteRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)).sort((a,b)=>Number(a[2]||0)-Number(b[2]||0)).forEach((r)=>{
-        const text=!config.apiUrl&&String(r[3]).includes('スプレッドシートの変更後')?'このデモは2026年10月5日取得データを使用します。シートからの自動反映は準備中です。':r[3];
-        $('notes').append(element('li',text));
-      });
-      if(unknown)$('notes').append(element('li','「料金確認中」のプランは単価未設定です。正式な料金をご確認ください。'));
+      // 紙面の「注意事項」は、シート「特記事項」の内容だけを表示する。
+      data.noteRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&String(r[3]??'').trim()).sort((a,b)=>Number(a[2]||0)-Number(b[2]||0)).forEach((r)=>$('notes').append(element('li',r[3])));
       $('empty').hidden=true;$('paper-frame').hidden=false;resize();
       const fitted=fit();
       if(backgroundFailed){setStatus('背景画像を読み込めませんでした。紙面の出力を停止しています。','error');return;}
