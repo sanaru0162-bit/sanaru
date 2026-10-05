@@ -34,6 +34,11 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: seasonal-live
+          name: github-pages-${{ github.run_attempt }}
+      - name: Wait for artifact metadata
+        run: sleep 5
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
