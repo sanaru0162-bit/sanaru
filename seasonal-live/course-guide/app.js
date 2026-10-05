@@ -110,13 +110,13 @@
     loading=true;failed=false;render();
     let timer;
     const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
-    const fail=()=>{cleanup();if(id!==requestId)return;loading=false;failed=true;data=null;$('source-info').textContent='最新データを取得できません。60秒後に再接続します。';render();};
+    const fail=()=>{clearTimeout(timer);script.remove();window[callback]=()=>{};setTimeout(()=>{delete window[callback];},60000);if(id!==requestId)return;loading=false;failed=true;data=null;$('source-info').textContent='最新データを取得できません。自動で再接続します。';render();};
     window[callback]=(response)=>{
       cleanup();if(id!==requestId)return;
       if(response?.ok!==true||response.region!==region||!Array.isArray(response.planRows)||!Array.isArray(response.unitRows)||!Array.isArray(response.noteRows)){fail();return;}
       data=response;loading=false;failed=false;render();$('source-info').textContent=`シート取得日時：${new Date(response.generatedAt).toLocaleString('ja-JP')}`;
     };
-    timer=setTimeout(fail,15000);script.onerror=fail;
+    timer=setTimeout(fail,45000);script.onerror=fail;
     const url=new URL(config.apiUrl);url.searchParams.set('callback',callback);url.searchParams.set('region',region);url.searchParams.set('_',Date.now());script.src=url.href;document.head.append(script);
   }
   buildGrades();$('source-info').textContent=config.apiUrl?'最新データを取得しています。':`${data.sourceSheet}の${data.capturedAt}取得データを使用しています。`;
