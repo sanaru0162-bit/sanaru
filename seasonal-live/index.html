@@ -789,18 +789,45 @@
           gap: 10px;
         }
       }
+      @page {
+        size: A4 portrait;
+      }
       @media print {
+        html,
+        body {
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: visible !important;
+        }
         .side,
         .actions {
           display: none !important;
         }
         .app {
           display: block !important;
-          width: 1177px;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 0 !important;
+          margin: 0 !important;
         }
-        .main {
-          height: auto;
-          overflow: visible;
+        .main,
+        .proposalView,
+        .handoverView {
+          width: 100% !important;
+          max-width: 100% !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+        .hero,
+        .body,
+        .courses,
+        .course,
+        .metrics,
+        .proposalMessage,
+        .specialNotes,
+        .hcards,
+        .hcard {
+          max-width: 100% !important;
         }
       }
       /* 2026-08-27 requested refinements */
