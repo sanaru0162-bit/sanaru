@@ -73,7 +73,7 @@
     $('paper').dataset.layout=summer?variant:'winter';
     $('paper').dataset.school=stage;
     const asset=summer?'summer-'+variant+'.png':'winter-'+stage+'.png';
-    const src=config.backgrounds?.[asset]||'assets/'+asset;
+    const src=config.backgrounds?.[asset]||'assets/'+asset+(summer?'':'?v=20261006');
     if($('background').getAttribute('src')!==src){backgroundReady=false;backgroundFailed=false;$('background').src=src;$('background').alt=(summer?'夏期':'冬期')+'講座 '+(schools.find(s=>s.id===stage)?.name||'')+'用の背景デザイン';}
   }
   function render(){
