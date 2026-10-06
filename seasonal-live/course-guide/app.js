@@ -128,7 +128,7 @@
     loading=true;failed=false;render();
     let timer;
     const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
-    const fail=()=>{clearTimeout(timer);script.remove();window[callback]=()=>{};setTimeout(()=>{delete window[callback];},60000);if(id!==requestId)return;loading=false;failed=true;data=null;$('source-info').textContent='最新データを取得できません。自動で再接続します。';render();};
+    const fail=()=>{clearTimeout(timer);script.remove();window[callback]=()=>{};setTimeout(()=>{delete window[callback];},60000);if(id!==requestId)return;loading=false;failed=true;data=null;$('source-info').textContent='最新データを取得できません。ページを開き直すか、再読み込みしてください。';render();};
     window[callback]=(response)=>{
       cleanup();if(id!==requestId)return;
       if(response?.ok!==true||response.region!==region||response.season!==season||!Array.isArray(response.planRows)||!Array.isArray(response.unitRows)||!Array.isArray(response.noteRows)){fail();return;}
@@ -138,13 +138,13 @@
     const url=new URL(config.apiUrl);url.searchParams.set('callback',callback);url.searchParams.set('region',region);url.searchParams.set('season',season);url.searchParams.set('_',Date.now());script.src=url.href;document.head.append(script);
   }
   buildGrades();$('source-info').textContent=config.apiUrl?'最新データを取得しています。':`${data.sourceSheet}の${data.capturedAt}取得データを使用しています。`;
-  $('refresh-info').textContent=config.apiUrl?'ページを開くと最新データを取得し、60秒ごとに更新します。特記事項は紙面の注意事項に反映します。':'取得済みデータを使用しています。シート変更の自動反映は準備中です。';
+  $('refresh-info').textContent=config.apiUrl?'ページを開く・再読み込みするタイミングでシートを取得します。開いている間の定期更新はありません。特記事項は紙面の注意事項に反映します。':'取得済みデータを使用しています。シート変更の自動反映は準備中です。';
   $('season').addEventListener('change',loadApi);$('rate-mode').addEventListener('change',render);$('region').addEventListener('change',()=>config.apiUrl?loadApi():render());
   $('print').addEventListener('click',()=>{render();if(canPrint)window.print();});
   window.addEventListener('resize',()=>{resize();render();});
   window.addEventListener('beforeprint',()=>{render();document.body.classList.toggle('print-blocked',!canPrint);});
   $('background').addEventListener('load',()=>{backgroundReady=true;render();});$('background').addEventListener('error',()=>{backgroundFailed=true;render();});
   if($('background').complete&&$('background').naturalWidth){backgroundReady=true;}
-  render();document.fonts.ready.then(render);if(config.apiUrl){loadApi();setInterval(loadApi,config.refreshMs);}
+  window.addEventListener('pageshow',(event)=>{if(event.persisted&&config.apiUrl)loadApi();});
+  render();document.fonts.ready.then(render);if(config.apiUrl)loadApi();
 })();
-
