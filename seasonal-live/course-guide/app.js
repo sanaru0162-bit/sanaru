@@ -71,7 +71,8 @@
     const summer=$('season').value==='summer', first=[...selected][0]||'小4';
     const stage=schoolOf(first)||'elementary', variant=stage==='middle'?(first==='中2'?'middle2':'middle1'):stage;
     $('paper').dataset.layout=summer?variant:'winter';
-    const asset=summer?'summer-'+variant+'.png':'winter-elementary.png';
+    $('paper').dataset.school=stage;
+    const asset=summer?'summer-'+variant+'.png':'winter-'+stage+'.png';
     const src=config.backgrounds?.[asset]||'assets/'+asset;
     if($('background').getAttribute('src')!==src){backgroundReady=false;backgroundFailed=false;$('background').src=src;$('background').alt=(summer?'夏期':'冬期')+'講座 '+(schools.find(s=>s.id===stage)?.name||'')+'用の背景デザイン';}
   }
@@ -84,7 +85,7 @@
     if(failed){unavailable('データを取得できませんでした。接続が回復するまで紙面の出力は停止します。');return;}
     if(!['winter','summer'].includes($('season').value)){unavailable('この季節の背景とプランは準備中です。冬期を選択するとデモを確認できます。');return;}
     if(!selected.size){unavailable('掲載する学年を選択してください。');return;}
-    if([...selected].some((g)=>!(summer?['小4','小5','小6','中1','中2','高1','高2']:['小4','小5','小6']).includes(g))){unavailable('選択した学年の背景またはプランは準備中です。デモは小4〜小6に対応しています。');return;}
+    if([...selected].some((g)=>!(summer?['小4','小5','小6','中1','中2','高1','高2']:['小4','小5','小6','中1','中2','中3','高1','高2','高3']).includes(g))){unavailable('選択した学年の背景またはプランは準備中です。デモは小4〜小6に対応しています。');return;}
     if($('region').value!=='owari'){unavailable('この地域版のプランは準備中です。愛知・尾張を選択するとデモを確認できます。');return;}
     try{
       if(!data||!Array.isArray(data.planRows)||!Array.isArray(data.unitRows)||!Array.isArray(data.noteRows))throw new Error('データの形式を確認してください。');
@@ -93,7 +94,8 @@
       const units=new Map(applicable.filter(r=>summer?r[5]==='紙面掲載':!r[5]&&!r[6]).map(r=>[r[1],Number(r[2])]));
       if(summer&&$('rate-mode').value==='正規')applicable.filter(r=>r[5]==='正規').forEach(r=>units.set(r[1],Number(r[2])));
       const rows=data.planRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&selected.has(r[2])).sort((a,b)=>Number(a[11]||0)-Number(b[11]||0));
-      if(!rows.length||[...selected].some((g)=>!rows.some((r)=>r[2]===g))){unavailable('選択した学年のプランが揃っていません。プランマスターを確認してください。');return;}
+      const missingGrades=[...selected].filter(g=>!rows.some(r=>r[2]===g));
+      $('paper').querySelector('.content').hidden=!rows.length;
       let unknown=false;
       const tbody=$('plans').querySelector('tbody');tbody.replaceChildren();
       rows.forEach((row)=>{
@@ -115,6 +117,7 @@
       const fitted=fit();
       if(backgroundFailed){setStatus('背景画像を読み込めませんでした。紙面の出力を停止しています。','error');return;}
       if(!backgroundReady){setStatus('背景画像を読み込んでいます。');return;}
+      if(missingGrades.length){setStatus(`${summer?'夏期':'冬期'}の${missingGrades.join('・')}のプランが未登録です。背景は取り込み済みです。${summer?'夏期プランマスター':'プランマスター'}に登録すると紙面へ表示されます。`,'warning');return;}
       if(!fitted.fits){setStatus('紙面に収まりません。掲載する学年を減らしてください。内容の欠落を防ぐため出力を停止しています。','error');return;}
       setPrintable(true);setStatus(`${rows.length}件のプランを表示しています。${unknown?'単価未設定のプランは「料金確認中」です。':''} デモ用の紙面としてPDF保存できます。`,unknown?'warning':'');
     }catch(error){unavailable(error.message);}
