@@ -45,10 +45,10 @@
     setStatus(text,'warning');setPrintable(false);
   }
   function rowPrice(row,units){
-    const kinds=['個別指導','AI学トレ','力シリーズ','映像授業'];
+    const kinds=['個別指導','AI学トレ','力シリーズ','映像授業','自立学習'];
     let total=0,unknown=false;
     kinds.forEach((kind,i)=>{
-      const count=Number(row[i+5]||0),unit=units.get(kind);
+      const count=Number(row[i===4?12:i+5]||0),unit=units.get(kind);
       if(!Number.isFinite(count)||count<0)throw new Error('回数が正しく設定されていません。');
       if(count>0){
         if(unit===undefined||!Number.isFinite(unit)||unit<0||(unit===0&&!config.freeContents.includes(kind)))unknown=true;
@@ -61,7 +61,7 @@
     const paper=$('paper'),table=$('plans'),wrap=paper.querySelector('.table-wrap'),notes=paper.querySelector('.paper-notes');
     let body=13,note=12;
     paper.style.setProperty('--body-size',`${body}px`);paper.style.setProperty('--note-size',`${note}px`);
-    while(table.getBoundingClientRect().height>wrap.getBoundingClientRect().height+.5&&body>10.5){body-=.25;paper.style.setProperty('--body-size',`${body}px`);}
+    while(table.getBoundingClientRect().height>wrap.getBoundingClientRect().height+.5&&body>8.5){body-=.25;paper.style.setProperty('--body-size',`${body}px`);}
     while($('notes').getBoundingClientRect().height>notes.getBoundingClientRect().height+.5&&note>10.5){note-=.25;paper.style.setProperty('--note-size',`${note}px`);}
     const fitsHeight=table.getBoundingClientRect().height<=wrap.getBoundingClientRect().height+.5&&$('notes').getBoundingClientRect().height<=notes.getBoundingClientRect().height+.5;
     const fitsWidth=[...paper.querySelectorAll('td,th')].every((cell)=>cell.scrollWidth<=cell.clientWidth+1);
@@ -79,21 +79,21 @@
     if($('region').value!=='owari'){unavailable('この地域版のプランは準備中です。愛知・尾張を選択するとデモを確認できます。');return;}
     try{
       if(!data||!Array.isArray(data.planRows)||!Array.isArray(data.unitRows)||!Array.isArray(data.noteRows))throw new Error('データの形式を確認してください。');
-      const units=new Map(data.unitRows.filter((r)=>enabled(r[0])).map((r)=>[r[1],Number(r[2])]));
+      const units=new Map(data.unitRows.filter((r)=>enabled(r[0])&&(!r[4]||r[4]==='小学生')&&!r[5]&&!r[6]).map((r)=>[r[1],Number(r[2])]));
       const rows=data.planRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&selected.has(r[2])).sort((a,b)=>Number(a[11]||0)-Number(b[11]||0));
       if(!rows.length||[...selected].some((g)=>!rows.some((r)=>r[2]===g))){unavailable('選択した学年のプランが揃っていません。プランマスターを確認してください。');return;}
       let unknown=false;
       const tbody=$('plans').querySelector('tbody');tbody.replaceChildren();
       rows.forEach((row)=>{
-        const tr=element('tr');tr.append(element('td',row[2]),element('td',row[3],'course'),element('td',row[4]));
-        const detail=['個別指導','AI学トレ','力シリーズ','映像授業'].map((kind,i)=>Number(row[i+5])>0?`${kind} ${row[i+5]}回`:null).filter(Boolean).join(' ＋ ');
+        const tr=element('tr'),course=element('td',row[3],'course');if(row[14])course.append(element('small',row[14]));tr.append(element('td',row[2]),course,element('td',row[4]));
+        const detail=['個別指導','AI学トレ','力シリーズ','映像授業','自立学習'].map((kind,i)=>{const count=row[i===4?12:i+5];return Number(count)>0?`${kind} ${count}回`:null;}).filter(Boolean).join(' ＋ ');
         const cell=element('td',detail,'detail');if(row[10] && !detail.replaceAll(' ','').endsWith(String(row[10]).replaceAll(' ','')))cell.append(element('small',row[10]));
-        const price=rowPrice(row,units);unknown ||= price.unknown;tr.append(cell,element('td',price.text));tbody.append(tr);
+        const price=rowPrice(row,units);unknown ||= price.unknown;tr.append(cell,element('td',price.text),element('td',row[13]||'','lesson-description'));tbody.append(tr);
       });
       $('paper-meta').textContent=`${label}　${[...selected].join('・')}　／ デモ用`;
       $('notes').replaceChildren();
       // 紙面の「注意事項」は、シート「特記事項」の内容だけを表示する。
-      data.noteRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&String(r[3]??'').trim()).sort((a,b)=>Number(a[2]||0)-Number(b[2]||0)).forEach((r)=>$('notes').append(element('li',r[3])));
+      data.noteRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&(!r[4]||r[4]==='小学生')&&(!r[5]||String(r[5]).split(/[,、・\s]+/).some(g=>selected.has(g)))&&String(r[3]??'').trim()).sort((a,b)=>Number(a[2]||0)-Number(b[2]||0)).forEach((r)=>$('notes').append(element('li',r[3])));
       $('empty').hidden=true;$('paper-frame').hidden=false;resize();
       const fitted=fit();
       if(backgroundFailed){setStatus('背景画像を読み込めませんでした。紙面の出力を停止しています。','error');return;}
