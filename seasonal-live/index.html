@@ -1439,7 +1439,7 @@
         <div class="section">
           <div class="sectitle">
             プランを選択
-            <span style="font-size: 9px; color: #5d7190">（1つのみ）</span>
+            <span style="font-size: 9px; color: #5d7190">（複数選択可）</span>
           </div>
           <div id="plans"></div>
         </div>
@@ -1561,7 +1561,7 @@
         regionLabel = "",
         season = "",
         exam = "一般受験用",
-        selected = {},
+        selected = new Set(),
         openSubject = "英語",
         studentName = "";
       const data = () =>
@@ -1577,7 +1577,7 @@
           return a + UNIT[k] * v;
         }, 0);
       const yen = (n) => n.toLocaleString("ja-JP") + "円（税込）";
-      const chosen = () => Object.values(selected).map((i) => data()[i]);
+      const chosen = () => Array.from(selected).sort((a, b) => a - b).map((i) => data()[i]);
       const esc = (text) =>
         String(text).replace(/[&<>"']/g, (char) => ({
           "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -1752,7 +1752,7 @@
         WINTER = [];
         REC = [];
         NOTES = { summer: [], winter: [], recommendation: [] };
-        selected = {};
+        selected = new Set();
         $("start").hidden = true;
         $("app").hidden = true;
       };
@@ -1815,7 +1815,7 @@
             if (!catalogReady) return;
             season = b.dataset.start;
             exam = "一般受験用";
-            selected = {};
+            selected = new Set();
             $("start").hidden = true;
             $("app").hidden = false;
             $("appRegionLabel").textContent = regionLabel;
@@ -1825,14 +1825,14 @@
       $("back").onclick = () => {
         $("app").hidden = true;
         $("start").hidden = false;
-        selected = {};
+        selected = new Set();
       };
       $("proposalBack").onclick = () => $("back").click();
       document.querySelectorAll("[data-season]").forEach(
         (b) =>
           (b.onclick = () => {
             season = b.dataset.season;
-            selected = {};
+            selected = new Set();
             exam = "一般受験用";
             renderAll();
           }),
@@ -1842,7 +1842,7 @@
           (b.onclick = () => {
             if (season === "夏期" && b.dataset.exam === "推薦入試用") return;
             exam = b.dataset.exam;
-            selected = {};
+            selected = new Set();
             renderAll();
           }),
       );
@@ -1883,7 +1883,7 @@
           h += `<div class="planGroup ${closed ? "closed" : ""}" data-sub="${esc(sub)}"><div class="planHead"><span>${esc(sub)}</span><em>${closed ? "+" : "⌃"}</em></div><div class="planOpts">`;
           rows.forEach((o) => {
             let x = o.x,
-              on = selected[sub] === o.i;
+              on = selected.has(o.i);
             h += `<button class="plan ${on ? "on" : ""}" data-i="${o.i}"><span class="radio"></span><div class="pname">${esc(x[1])}</div><div class="pmini">全${reps(x[3])}回・${reps(x[3])}時間｜目安：${esc(x[2])}</div></button>`;
           });
           h += "</div></div>";
@@ -1901,7 +1901,7 @@
             (b.onclick = () => {
               let i = +b.dataset.i,
                 sub = d[i][0];
-              selected[sub] === i ? delete selected[sub] : (selected[sub] = i);
+              selected.has(i) ? selected.delete(i) : selected.add(i);
               openSubject = sub;
               renderPlans();
               update();
