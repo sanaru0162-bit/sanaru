@@ -4,3 +4,21 @@
 td.lesson-description{text-align:left}
 #plans{line-height:1.25}#plans th,#plans td{padding:2px 4px}#plans td.course small{display:inline;margin-left:4px}
 #plans th,#plans td{padding-top:1.5px;padding-bottom:1.5px}
+
+/* Opaque white frames cover all original printed text; sheet data is rendered above them. */
+.paper[data-layout]:not([data-layout="winter"]) .content{left:var(--table-left);right:auto;top:var(--table-top);width:var(--table-width);height:var(--table-height);background:white;padding:8px;border:1px solid #193650}
+.paper[data-layout]:not([data-layout="winter"]) .paper-notes{left:53.5%;right:auto;top:2%;width:44.4%;height:34.2%;background:white;padding:8px;line-height:1.25;border:1px solid #193650}
+.paper[data-layout="elementary"]{--table-left:3.6%;--table-top:41.7%;--table-width:92.9%;--table-height:54.8%}
+.paper[data-layout="elementary"] .paper-notes{left:52.5%!important;width:43.7%!important}
+.paper[data-layout="middle1"]{--table-left:3.7%;--table-top:38.8%;--table-width:92.8%;--table-height:56.9%}
+.paper[data-layout="middle2"]{--table-left:6.9%;--table-top:40.3%;--table-width:87.3%;--table-height:54.5%}
+.paper[data-layout="high"]{--table-left:7.1%;--table-top:38.5%;--table-width:86.2%;--table-height:58.4%}
+.paper[data-layout="high"] .paper-notes{height:32.6%!important}
+.notes-heading{display:flex;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:var(--note-size)}
+.paper[data-layout]:not([data-layout="winter"]) .paper-heading{margin-bottom:4px}
+.paper[data-layout]:not([data-layout="winter"]) .paper-heading h2{font-size:16px}
+.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(2){width:7%!important}
+.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(3){width:14%!important}
+.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(4){width:19%!important}
+.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(5){width:12%!important}
+.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(6){width:43%!important}
