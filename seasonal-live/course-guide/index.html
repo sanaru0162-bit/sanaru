@@ -6,7 +6,7 @@
   <meta name="description" content="季節・地域版・学年を選び、季節講座の案内紙面を作成します。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230054a6'/%3E%3Cpath d='M8 7h12l5 5v13H8z' fill='white'/%3E%3Cpath d='M12 16h9M12 20h9' stroke='%230054a6' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="app.css?v=20261006-winter">
-  <script defer src="data.js"></script><script defer src="app.js?v=20261006-winter"></script>
+  <script defer src="data.js"></script><script defer src="app.js?v=20261007-fixed-rate"></script>
 </head>
 <body>
   <header class="topbar"><span class="brand">さなる個別@will</span><h1>季節講座 案内作成</h1><span class="demo-badge">デモ版</span></header>
@@ -15,7 +15,7 @@
       <div class="field"><label for="season">1　季節</label><select id="season"><option value="winter">冬期</option><option value="summer">夏期</option><option value="spring">春期（準備中）</option></select></div>
       <div class="field"><label for="region">2　地域版</label><select id="region"><option value="owari">愛知・尾張</option><option value="mikawa_with">愛知・三河（個別指導あり）</option><option value="mikawa_without">愛知・三河（個別指導なし）</option><option value="shizuoka">静岡</option></select></div>
       <fieldset class="field"><legend>3　学年</legend><p class="hint">同じ学校段階の学年を複数選べます。</p><div id="grades"></div><p id="grade-help" class="hint">小4〜小6の紙面を確認できます。</p></fieldset>
-      <div id="rate-field" class="field" hidden><label for="rate-mode">受講料の条件</label><select id="rate-mode"><option value="紙面掲載">資料掲載料金（既受講条件を満たす）</option><option value="正規">正規料金（既受講条件を満たさない）</option></select><p class="hint">適用条件は紙面の特記事項をご確認ください。</p></div><button id="print" class="primary" disabled>印刷・PDF保存</button>
+      <button id="print" class="primary" disabled>印刷・PDF保存</button>
       <p class="hint">印刷画面で「PDFに保存」を選択してください。用紙はA4・横向きです。</p>
       <div class="source-info"><b>データについて</b><p id="source-info"></p><p id="refresh-info"></p><a href="https://docs.google.com/spreadsheets/d/1j63jxMDg5L09a4Gncnq7gowv8SXtjbIoJe52tC-67k8/edit" target="_blank" rel="noopener">プランマスターを開く</a></div>
     </aside>

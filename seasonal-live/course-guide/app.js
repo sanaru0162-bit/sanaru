@@ -78,7 +78,7 @@
   }
   function render(){
     lockSchools();setPrintable(false);chooseBackground();
-    const summer=$('season').value==='summer';$('rate-field').hidden=!summer;
+    const summer=$('season').value==='summer';
     const label=regions[$('region').value];
     $('summary').textContent=`${label} ／ ${[...selected].join('・')||'学年未選択'}`;
     if(loading){unavailable('最新データを取得しています。');return;}
@@ -92,7 +92,6 @@
       const stage=schools.find(s=>s.id===schoolOf([...selected][0])).name;
       const applicable=data.unitRows.filter(r=>enabled(r[0])&&(!r[4]||r[4]===stage));
       const units=new Map(applicable.filter(r=>summer?r[5]==='紙面掲載':!r[5]&&!r[6]).map(r=>[r[1],Number(r[2])]));
-      if(summer&&$('rate-mode').value==='正規')applicable.filter(r=>r[5]==='正規').forEach(r=>units.set(r[1],Number(r[2])));
       const rows=data.planRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&selected.has(r[2])).sort((a,b)=>Number(a[11]||0)-Number(b[11]||0));
       const missingGrades=[...selected].filter(g=>!rows.some(r=>r[2]===g));
       $('paper').querySelector('.content').hidden=!rows.length;
@@ -104,7 +103,7 @@
         const cell=element('td',detail,'detail');if(row[10] && !detail.replaceAll(' ','').endsWith(String(row[10]).replaceAll(' ','')))cell.append(element('small',row[10]));
         const price=rowPrice(row,units);unknown ||= price.unknown;tr.append(cell,element('td',price.text),element('td',row[13]||'','lesson-description'));tbody.append(tr);
       });
-      $('paper-meta').textContent=[label,[...selected].join('・'),summer?[String(data.settings?.年度||''),$('rate-mode').value==='正規'?'正規料金':'資料掲載料金'].filter(Boolean).join(' ／ '): 'デモ用'].filter(Boolean).join('　');
+      $('paper-meta').textContent=[label,[...selected].join('・'),summer?[String(data.settings?.年度||''),'資料掲載料金'].filter(Boolean).join(' ／ '): 'デモ用'].filter(Boolean).join('　');
       $('paper-title').textContent=data.settings?.見出し||((summer?'夏期':'冬期')+'講座 おすすめプラン');
       $('notes-heading').hidden=!summer;
       $('notes-title').textContent=data.settings?.特記事項見出し||'特記事項';
@@ -112,7 +111,7 @@
       $('notes').replaceChildren();
       // 紙面の「注意事項」は、シート「特記事項」の内容だけを表示する。
       data.noteRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&(!r[4]||r[4]===stage)&&(!r[5]||String(r[5]).split(/[,、・\s]+/).some(g=>selected.has(g)))&&String(r[3]??'').trim()).sort((a,b)=>Number(a[2]||0)-Number(b[2]||0)).forEach((r)=>$('notes').append(element('li',r[3])));
-      if(summer&&data.settings?.料金注記&&$('rate-mode').value==='紙面掲載')$('notes').append(element('li',data.settings.料金注記));
+      if(summer&&data.settings?.料金注記)$('notes').append(element('li',data.settings.料金注記));
       $('empty').hidden=true;$('paper-frame').hidden=false;resize();
       const fitted=fit();
       if(backgroundFailed){setStatus('背景画像を読み込めませんでした。紙面の出力を停止しています。','error');return;}
@@ -142,7 +141,7 @@
   }
   buildGrades();$('source-info').textContent=config.apiUrl?'最新データを取得しています。':`${data.sourceSheet}の${data.capturedAt}取得データを使用しています。`;
   $('refresh-info').textContent=config.apiUrl?'ページを開く・再読み込みするタイミングでシートを取得します。開いている間の定期更新はありません。特記事項は紙面の注意事項に反映します。':'取得済みデータを使用しています。シート変更の自動反映は準備中です。';
-  $('season').addEventListener('change',loadApi);$('rate-mode').addEventListener('change',render);$('region').addEventListener('change',()=>config.apiUrl?loadApi():render());
+  $('season').addEventListener('change',loadApi);$('region').addEventListener('change',()=>config.apiUrl?loadApi():render());
   $('print').addEventListener('click',()=>{render();if(canPrint)window.print();});
   window.addEventListener('resize',()=>{resize();render();});
   window.addEventListener('beforeprint',()=>{render();document.body.classList.toggle('print-blocked',!canPrint);});
