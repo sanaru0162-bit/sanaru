@@ -21,6 +21,7 @@
         const grade=s.prefix+n,box=element('div',undefined,'grade-choice'),label=element('label');
         const input=element('input');input.type='checkbox';input.value=grade;input.dataset.school=s.id;input.checked=selected.has(grade);
         input.addEventListener('change',()=>{
+          if(!availableGrades().has(grade)){input.checked=false;return;}
           const existing=selected.size?schoolOf([...selected][0]):null;
           if(input.checked && existing && existing!==s.id){input.checked=false;return;}
           input.checked?selected.add(grade):selected.delete(grade);render();
@@ -29,10 +30,17 @@
       group.append(options);$('grades').append(group);
     });
   }
+  function availableGrades(){
+    const season=$('season').value,label=regions[$('region').value];
+    if(loading||failed||!['winter','summer'].includes(season)||$('region').value!=='owari'||!Array.isArray(data?.planRows)||(data.season&&data.season!==season))return new Set();
+    return new Set(data.planRows.filter(r=>enabled(r[0])&&(!r[1]||r[1]===label)&&schoolOf(r[2]||'')).map(r=>r[2]));
+  }
   function lockSchools(){
+    const available=availableGrades();
+    if(!loading&&!failed&&['winter','summer'].includes($('season').value)&&$('region').value==='owari'&&Array.isArray(data?.planRows)&&(!data.season||data.season===$('season').value))selected=new Set([...selected].filter(g=>available.has(g)));
     const active=selected.size?schoolOf([...selected][0]):null;
-    $('grades').querySelectorAll('input').forEach((input)=>{input.checked=selected.has(input.value);input.disabled=!!active&&input.dataset.school!==active;});
-    $('grade-help').textContent=active?'学校段階を変えるときは、選択中の学年をすべて外してください。':'小4〜小6の紙面を確認できます。';
+    $('grades').querySelectorAll('input').forEach((input)=>{input.checked=selected.has(input.value);input.disabled=!available.has(input.value)||(!!active&&input.dataset.school!==active);input.parentElement.title=!available.has(input.value)?(loading?'プランを取得しています。':'この季節・地域の有効なプランがありません。'):'';});
+    $('grade-help').textContent='登録されたプランがある学年のみ選択できます。'+(active?'学校段階を変えるときは、選択中の学年をすべて外してください。':'');
   }
   function resize(){
     if($('paper-frame').hidden)return;
