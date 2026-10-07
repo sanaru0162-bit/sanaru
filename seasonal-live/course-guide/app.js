@@ -116,7 +116,7 @@
       const fitted=fit();
       if(backgroundFailed){setStatus('背景画像を読み込めませんでした。紙面の出力を停止しています。','error');return;}
       if(!backgroundReady){setStatus('背景画像を読み込んでいます。');return;}
-      if(missingGrades.length){setStatus(`${summer?'夏期':'冬期'}の${missingGrades.join('・')}のプランが未登録です。背景は取り込み済みです。${summer?'夏期プランマスター':'プランマスター'}に登録すると紙面へ表示されます。`,'warning');return;}
+      if(missingGrades.length){setStatus(`${summer?'夏期':'冬期'}の${missingGrades.join('・')}のプランが未登録です。背景は取り込み済みです。プランシートに登録すると紙面へ表示されます。`,'warning');return;}
       if(!fitted.fits){setStatus('紙面に収まりません。掲載する学年を減らしてください。内容の欠落を防ぐため出力を停止しています。','error');return;}
       setPrintable(true);setStatus(`${rows.length}件のプランを表示しています。${unknown?'単価未設定のプランは「料金確認中」です。':''} デモ用の紙面としてPDF保存できます。`,unknown?'warning':'');
     }catch(error){unavailable(error.message);}
