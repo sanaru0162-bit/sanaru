@@ -31,5 +31,7 @@ td.lesson-description{text-align:left}
 .paper[data-layout="winter"][data-school="elementary"] .content{left:7.5%;right:8.5%;top:26.1%;height:42.6%}
 .paper[data-layout="winter"][data-school="middle"] .content{left:8%;right:8.5%;top:29.3%;height:38.5%}
 .paper[data-layout="winter"][data-school="high"] .content{left:8.5%;right:12.5%;top:32.7%;height:35.1%}
-.paper[data-layout="winter"][data-school="middle"] .paper-notes{left:6%;right:17%;top:83.5%;height:9.2%}
-.paper[data-layout="winter"][data-school="high"] .paper-notes{left:6%;right:18%;top:83.5%;height:7.1%}
+.paper[data-layout="winter"] .paper-notes{height:10%;line-height:1.1}
+.paper[data-layout="winter"] .paper-notes li{margin-bottom:0}
+.paper[data-layout="winter"][data-school="middle"] .paper-notes{left:6%;right:17%;top:83.5%;height:10%}
+.paper[data-layout="winter"][data-school="high"] .paper-notes{left:6%;right:18%;top:83.5%;height:8.5%}
