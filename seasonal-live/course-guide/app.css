@@ -17,11 +17,16 @@ td.lesson-description{text-align:left}
 .notes-heading{display:flex;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:var(--note-size)}
 .paper[data-layout]:not([data-layout="winter"]) .paper-heading{margin-bottom:4px}
 .paper[data-layout]:not([data-layout="winter"]) .paper-heading h2{font-size:16px}
-.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(2){width:7%!important}
-.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(3){width:14%!important}
-.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(4){width:19%!important}
-.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(5){width:12%!important}
-.paper[data-layout]:not([data-layout="winter"]) #plans col:nth-child(6){width:43%!important}
+/* Reserve narrow columns for short labels and give descriptions the remaining space. */
+#plans col:nth-child(1){width:4.5%!important}
+#plans col:nth-child(2){width:6%!important}
+#plans col:nth-child(3){width:7%!important}
+#plans col:nth-child(4){width:18%!important}
+#plans col:nth-child(5){width:12%!important}
+#plans col:nth-child(6){width:52.5%!important}
+.paper[data-school="high"] #plans col:nth-child(3){width:17%!important}
+.paper[data-school="high"] #plans col:nth-child(6){width:42.5%!important}
+#plans td.course{text-align:center}
 
 .paper[data-layout="winter"][data-school="elementary"] .content{left:7.5%;right:8.5%;top:26.1%;height:42.6%}
 .paper[data-layout="winter"][data-school="middle"] .content{left:8%;right:8.5%;top:29.3%;height:38.5%}
