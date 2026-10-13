@@ -2,6 +2,7 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
   const regions = {owari:'愛知・尾張',mikawa_with:'愛知・三河（個別指導あり）',mikawa_without:'愛知・三河（個別指導なし）',shizuoka:'静岡'};
+  const sourceSheets = {owari:'1j63jxMDg5L09a4Gncnq7gowv8SXtjbIoJe52tC-67k8',mikawa_with:'1YBgEd8iIkobchVwnOOxr43tXJEUiLxo20f0hM1swACM',mikawa_without:'1XXGhVEQIHxNv-BGwA9Nb2VFIqoSd76LNqrGBbIsql7s'};
   const schools = [{id:'elementary',name:'小学生',prefix:'小',count:6},{id:'middle',name:'中学生',prefix:'中',count:3},{id:'high',name:'高校生',prefix:'高',count:3}];
   const config = window.COURSE_CONFIG;
   const enabled = (v) => v === true || v === 1 || String(v).toLowerCase() === 'true';
@@ -32,12 +33,12 @@
   }
   function availableGrades(){
     const season=$('season').value,label=regions[$('region').value];
-    if(loading||failed||!['winter','summer'].includes(season)||$('region').value!=='owari'||!Array.isArray(data?.planRows)||(data.season&&data.season!==season))return new Set();
+    if(loading||failed||!['winter','summer'].includes(season)||!sourceSheets[$('region').value]||!Array.isArray(data?.planRows)||(data.season&&data.season!==season)||(data.region&&data.region!==$('region').value))return new Set();
     return new Set(data.planRows.filter(r=>enabled(r[0])&&(!r[1]||r[1]===label)&&schoolOf(r[2]||'')).map(r=>r[2]));
   }
   function lockSchools(){
     const available=availableGrades();
-    if(!loading&&!failed&&['winter','summer'].includes($('season').value)&&$('region').value==='owari'&&Array.isArray(data?.planRows)&&(!data.season||data.season===$('season').value))selected=new Set([...selected].filter(g=>available.has(g)));
+    if(!loading&&!failed&&['winter','summer'].includes($('season').value)&&sourceSheets[$('region').value]&&Array.isArray(data?.planRows)&&(!data.season||data.season===$('season').value)&&(!data.region||data.region===$('region').value))selected=new Set([...selected].filter(g=>available.has(g)));
     const active=selected.size?schoolOf([...selected][0]):null;
     $('grades').querySelectorAll('input').forEach((input)=>{input.checked=selected.has(input.value);input.disabled=!available.has(input.value)||(!!active&&input.dataset.school!==active);input.parentElement.title=!available.has(input.value)?(loading?'プランを取得しています。':'この季節・地域の有効なプランがありません。'):'';});
     $('grade-help').textContent='登録されたプランがある学年のみ選択できます。'+(active?'学校段階を変えるときは、選択中の学年をすべて外してください。':'');
@@ -85,6 +86,9 @@
     if($('background').getAttribute('src')!==src){backgroundReady=false;backgroundFailed=false;$('background').src=src;$('background').alt=(summer?'夏期':'冬期')+'講座 '+(schools.find(s=>s.id===stage)?.name||'')+'用の背景デザイン';}
   }
   function render(){
+    const sheetId=sourceSheets[$('region').value];
+    $('source-link').hidden=!sheetId;
+    if(sheetId)$('source-link').href='https://docs.google.com/spreadsheets/d/'+sheetId+'/edit';
     lockSchools();setPrintable(false);chooseBackground();
     const summer=$('season').value==='summer';
     const label=regions[$('region').value];
@@ -94,7 +98,7 @@
     if(!['winter','summer'].includes($('season').value)){unavailable('この季節の背景とプランは準備中です。冬期または夏期を選択してください。');return;}
     if(!selected.size){unavailable('掲載する学年を選択してください。');return;}
     if([...selected].some((g)=>!(summer?['小4','小5','小6','中1','中2','高1','高2']:['小4','小5','小6','中1','中2','中3','高1','高2','高3']).includes(g))){unavailable('選択した学年の背景またはプランは準備中です。登録済みの学年を選択してください。');return;}
-    if($('region').value!=='owari'){unavailable('この地域版のプランは準備中です。愛知・尾張を選択してください。');return;}
+    if(!sourceSheets[$('region').value]){unavailable('この地域版のプランは準備中です。愛知・尾張または愛知・三河を選択してください。');return;}
     try{
       if(!data||!Array.isArray(data.planRows)||!Array.isArray(data.unitRows)||!Array.isArray(data.noteRows))throw new Error('データの形式を確認してください。');
       const stage=schools.find(s=>s.id===schoolOf([...selected][0])).name;
@@ -132,7 +136,7 @@
   function loadApi(){
     if(!config.apiUrl){data=window.COURSE_DATASETS?.[$('season').value]||window.COURSE_DATA;render();return;}
     if(!['winter','summer'].includes($('season').value)){++requestId;loading=false;failed=false;data=null;render();return;}
-    if($('region').value!=='owari'){++requestId;loading=false;failed=false;data=null;render();return;}
+    if(!sourceSheets[$('region').value]){++requestId;loading=false;failed=false;data=null;render();return;}
     const region=$('region').value,season=$('season').value;
     const id=++requestId,callback=`courseGuide_${Date.now()}_${id}`,script=document.createElement('script');
     loading=true;failed=false;render();
