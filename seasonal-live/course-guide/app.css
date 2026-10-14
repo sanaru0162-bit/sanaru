@@ -2,8 +2,8 @@
 
 
 td.lesson-description{text-align:left}
-#plans{line-height:1.25}#plans th,#plans td{padding:2px 4px}#plans td.course small{display:inline;margin-left:4px}
-#plans th,#plans td{padding-top:1.5px;padding-bottom:1.5px}
+.plan-table{line-height:1.25}.plan-table th,.plan-table td{padding:2px 4px}.plan-table td.course small{display:inline;margin-left:4px}
+.plan-table th,.plan-table td{padding-top:1.5px;padding-bottom:1.5px}
 
 /* Opaque white frames cover all original printed text; sheet data is rendered above them. */
 .paper[data-layout]:not([data-layout="winter"]) .content{left:var(--table-left);right:auto;top:var(--table-top);width:var(--table-width);height:var(--table-height);background:white;padding:8px;border:1px solid #193650}
@@ -18,15 +18,15 @@ td.lesson-description{text-align:left}
 .paper[data-layout]:not([data-layout="winter"]) .paper-heading{margin-bottom:4px}
 .paper[data-layout]:not([data-layout="winter"]) .paper-heading h2{font-size:16px}
 /* Reserve narrow columns for short labels and give descriptions the remaining space. */
-#plans col:nth-child(1){width:4.5%!important}
-#plans col:nth-child(2){width:6%!important}
-#plans col:nth-child(3){width:7%!important}
-#plans col:nth-child(4){width:18%!important}
-#plans col:nth-child(5){width:12%!important}
-#plans col:nth-child(6){width:52.5%!important}
-.paper[data-school="high"] #plans col:nth-child(3){width:17%!important}
-.paper[data-school="high"] #plans col:nth-child(6){width:42.5%!important}
-#plans td.course{text-align:center}
+.plan-table col:nth-child(1){width:4.5%!important}
+.plan-table col:nth-child(2){width:6%!important}
+.plan-table col:nth-child(3){width:7%!important}
+.plan-table col:nth-child(4){width:18%!important}
+.plan-table col:nth-child(5){width:12%!important}
+.plan-table col:nth-child(6){width:52.5%!important}
+.paper[data-school="high"] .plan-table col:nth-child(3){width:17%!important}
+.paper[data-school="high"] .plan-table col:nth-child(6){width:42.5%!important}
+.plan-table td.course{text-align:center}
 
 .paper[data-layout="winter"][data-school="elementary"] .content{left:7.5%;right:8.5%;top:26.1%;height:42.6%}
 .paper[data-layout="winter"][data-school="middle"] .content{left:8%;right:8.5%;top:29.3%;height:38.5%}
@@ -35,3 +35,5 @@ td.lesson-description{text-align:left}
 .paper[data-layout="winter"] .paper-notes li{margin-bottom:0}
 .paper[data-layout="winter"][data-school="middle"] .paper-notes{left:6%;right:17%;top:83.5%;height:10%}
 .paper[data-layout="winter"][data-school="high"] .paper-notes{left:6%;right:18%;top:83.5%;height:8.5%}
+.school-buttons{display:flex;flex-wrap:wrap;gap:8px}.school-button{padding:10px 12px;background:white;color:#183449;border:1px solid #8fa7bc;border-radius:4px;cursor:pointer}.school-button[aria-pressed="true"]{background:#e7f2ff;border-color:#0054a6;color:#0054a6;font-weight:700}.school-button:disabled{opacity:.45;cursor:not-allowed}.school-button:focus-visible{outline:3px solid #e5a900;outline-offset:3px}
+@media print{.extra-page{position:relative;margin:0!important;width:297mm!important;height:210mm!important;break-before:page;page-break-before:always}.extra-page .paper{position:relative;transform:none!important}.paper-frame{break-inside:avoid;page-break-inside:avoid}}

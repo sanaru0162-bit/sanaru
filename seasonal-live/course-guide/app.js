@@ -8,6 +8,7 @@
   const enabled = (v) => v === true || v === 1 || String(v).toLowerCase() === 'true';
   let data = config.apiUrl ? null : window.COURSE_DATA;
   let selected = new Set(['小4','小5','小6']);
+  let selectedSchool = 'elementary';
   let canPrint = false, backgroundReady = false, backgroundFailed = false, loading = false, failed = false, requestId = 0;
   const currency = new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0});
   const schoolOf = (grade) => schools.find((s)=>grade.startsWith(s.prefix))?.id;
@@ -16,19 +17,8 @@
   const setPrintable = (value) => {canPrint=value;$('print').disabled=!value;document.body.classList.toggle('print-blocked',!value);};
   function buildGrades(){
     schools.forEach((s)=>{
-      const group=element('div',undefined,'school');group.append(element('span',s.name,'school-title'));
-      const options=element('div',undefined,'grade-options');
-      for(let n=1;n<=s.count;n++){
-        const grade=s.prefix+n,box=element('div',undefined,'grade-choice'),label=element('label');
-        const input=element('input');input.type='checkbox';input.value=grade;input.dataset.school=s.id;input.checked=selected.has(grade);
-        input.addEventListener('change',()=>{
-          if(!availableGrades().has(grade)){input.checked=false;return;}
-          const existing=selected.size?schoolOf([...selected][0]):null;
-          if(input.checked && existing && existing!==s.id){input.checked=false;return;}
-          input.checked?selected.add(grade):selected.delete(grade);render();
-        });label.append(input,document.createTextNode(grade));box.append(label);options.append(box);
-      }
-      group.append(options);$('grades').append(group);
+      const button=element('button',s.name,'school-button');button.type='button';button.dataset.school=s.id;
+      button.addEventListener('click',()=>{selectedSchool=s.id;render();});$('grades').append(button);
     });
   }
   function availableGrades(){
@@ -38,16 +28,17 @@
   }
   function lockSchools(){
     const available=availableGrades();
-    if(!loading&&!failed&&['winter','summer'].includes($('season').value)&&sourceSheets[$('region').value]&&Array.isArray(data?.planRows)&&(!data.season||data.season===$('season').value)&&(!data.region||data.region===$('region').value))selected=new Set([...selected].filter(g=>available.has(g)));
-    const active=selected.size?schoolOf([...selected][0]):null;
-    $('grades').querySelectorAll('input').forEach((input)=>{input.checked=selected.has(input.value);input.disabled=!available.has(input.value)||(!!active&&input.dataset.school!==active);input.parentElement.title=!available.has(input.value)?(loading?'プランを取得しています。':'この季節・地域の有効なプランがありません。'):'';});
-    $('grade-help').textContent='登録されたプランがある学年のみ選択できます。'+(active?'学校段階を変えるときは、選択中の学年をすべて外してください。':'');
+    selected=new Set([...available].filter(g=>schoolOf(g)===selectedSchool));
+    $('grades').querySelectorAll('button').forEach(button=>{
+      button.disabled=![...available].some(g=>schoolOf(g)===button.dataset.school);
+      button.setAttribute('aria-pressed',String(button.dataset.school===selectedSchool));
+      button.title=button.disabled?(loading?'プランを取得しています。':'この季節・地域の有効なプランがありません。'):'';
+    });
+    $('grade-help').textContent='選択した区分の有効なプランを全学年分表示します。';
   }
   function resize(){
     if($('paper-frame').hidden)return;
-    const scale=Math.min(1,$('paper-frame').clientWidth/1123);
-    $('paper').style.transform=`scale(${scale})`;
-    $('paper-frame').style.height=`${794*scale}px`;
+    document.querySelectorAll('.paper-frame').forEach(frame=>{const scale=Math.min(1,frame.clientWidth/1123);frame.querySelector('.paper').style.transform=`scale(${scale})`;frame.style.height=`${794*scale}px`;});
   }
   function unavailable(text){
     $('paper-frame').hidden=true;$('empty').hidden=false;$('empty').textContent=text;
@@ -66,19 +57,35 @@
     });
     return {text:unknown?'料金確認中':currency.format(total),unknown};
   }
-  function fit(){
-    const paper=$('paper'),table=$('plans'),wrap=paper.querySelector('.table-wrap'),notes=paper.querySelector('.paper-notes');
+  function fit(paper=$('paper')){
+    const table=paper.querySelector('table'),wrap=paper.querySelector('.table-wrap'),notes=paper.querySelector('.paper-notes');
     let body=13,note=12;
     paper.style.setProperty('--body-size',`${body}px`);paper.style.setProperty('--note-size',`${note}px`);
     while(table.getBoundingClientRect().height>wrap.getBoundingClientRect().height+.5&&body>8.5){body-=.25;paper.style.setProperty('--body-size',`${body}px`);}
     while(notes.scrollHeight>notes.clientHeight+1&&note>8.5){note-=.25;paper.style.setProperty('--note-size',`${note}px`);}
     const fitsHeight=table.getBoundingClientRect().height<=wrap.getBoundingClientRect().height+.5&&notes.scrollHeight<=notes.clientHeight+1;
     const fitsWidth=[...paper.querySelectorAll('td,th')].every((cell)=>cell.scrollWidth<=cell.clientWidth+1);
-    return {fits:fitsHeight&&fitsWidth,font:body};
+    return {fits:fitsHeight&&fitsWidth,font:body,tableFits:table.getBoundingClientRect().height<=wrap.getBoundingClientRect().height+.5};
+  }
+  function paginate(){
+    const first=$('paper'),rows=[...first.querySelector('tbody').children];
+    first.querySelector('tbody').replaceChildren();let paper=first,pages=1;
+    for(const row of rows){
+      const tbody=paper.querySelector('tbody');tbody.append(row);
+      if(!fit(paper).tableFits&&tbody.children.length>1){
+        row.remove();fit(paper);
+        const frame=$('paper-frame').cloneNode(true);frame.removeAttribute('id');frame.classList.add('extra-page');
+        frame.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+        paper=frame.querySelector('.paper');paper.querySelector('tbody').replaceChildren(row);
+        $('paper-frame').parentElement.append(frame);pages++;resize();fit(paper);
+      }
+    }
+    const fits=[...document.querySelectorAll('.paper-frame .paper')].every(p=>fit(p).fits);
+    return {fits,pages};
   }
   function chooseBackground(){
     const summer=$('season').value==='summer', first=[...selected][0]||'小4';
-    const stage=schoolOf(first)||'elementary', variant=stage==='middle'?(first==='中2'?'middle2':'middle1'):stage;
+    const stage=selectedSchool, variant=stage==='middle'?'middle1':stage;
     $('paper').dataset.layout=summer?variant:'winter';
     $('paper').dataset.school=stage;
     const asset=summer?'summer-'+variant+'.png':'winter-'+stage+'.png';
@@ -86,18 +93,18 @@
     if($('background').getAttribute('src')!==src){backgroundReady=false;backgroundFailed=false;$('background').src=src;$('background').alt=(summer?'夏期':'冬期')+'講座 '+(schools.find(s=>s.id===stage)?.name||'')+'用の背景デザイン';}
   }
   function render(){
+    document.querySelectorAll('.extra-page').forEach(frame=>frame.remove());
     const sheetId=sourceSheets[$('region').value];
     $('source-link').hidden=!sheetId;
     if(sheetId)$('source-link').href='https://docs.google.com/spreadsheets/d/'+sheetId+'/edit';
     lockSchools();setPrintable(false);chooseBackground();
     const summer=$('season').value==='summer';
     const label=regions[$('region').value];
-    $('summary').textContent=`${label} ／ ${[...selected].join('・')||'学年未選択'}`;
+    $('summary').textContent=`${label} ／ ${schools.find(s=>s.id===selectedSchool).name}`;
     if(loading){unavailable('最新データを取得しています。');return;}
     if(failed){unavailable('データを取得できませんでした。接続が回復するまで紙面の出力は停止します。');return;}
     if(!['winter','summer'].includes($('season').value)){unavailable('この季節の背景とプランは準備中です。冬期または夏期を選択してください。');return;}
-    if(!selected.size){unavailable('掲載する学年を選択してください。');return;}
-    if([...selected].some((g)=>!(summer?['小4','小5','小6','中1','中2','高1','高2']:['小4','小5','小6','中1','中2','中3','高1','高2','高3']).includes(g))){unavailable('選択した学年の背景またはプランは準備中です。登録済みの学年を選択してください。');return;}
+    if(!selected.size){unavailable('選択した区分のプランは未登録です。');return;}
     if(!sourceSheets[$('region').value]){unavailable('この地域版のプランは準備中です。愛知・尾張または愛知・三河を選択してください。');return;}
     try{
       if(!data||!Array.isArray(data.planRows)||!Array.isArray(data.unitRows)||!Array.isArray(data.noteRows))throw new Error('データの形式を確認してください。');
@@ -125,12 +132,12 @@
       data.noteRows.filter((r)=>enabled(r[0])&&(!r[1]||r[1]===label)&&(!r[4]||r[4]===stage)&&(!r[5]||String(r[5]).split(/[,、・\s]+/).some(g=>selected.has(g)))&&String(r[3]??'').trim()).sort((a,b)=>Number(a[2]||0)-Number(b[2]||0)).forEach((r)=>$('notes').append(element('li',r[3])));
       if(summer&&data.settings?.料金注記)$('notes').append(element('li',data.settings.料金注記));
       $('empty').hidden=true;$('paper-frame').hidden=false;resize();
-      const fitted=fit();
+      const fitted=paginate();
       if(backgroundFailed){setStatus('背景画像を読み込めませんでした。紙面の出力を停止しています。','error');return;}
       if(!backgroundReady){setStatus('背景画像を読み込んでいます。');return;}
       if(missingGrades.length){setStatus(`${summer?'夏期':'冬期'}の${missingGrades.join('・')}のプランが未登録です。背景は取り込み済みです。プランシートに登録すると紙面へ表示されます。`,'warning');return;}
-      if(!fitted.fits){setStatus('紙面に収まりません。掲載する学年を減らしてください。内容の欠落を防ぐため出力を停止しています。','error');return;}
-      setPrintable(true);setStatus(`${rows.length}件のプランを表示しています。${unknown?'単価未設定のプランは「料金確認中」です。':''} 印刷・PDF保存できます。`,unknown?'warning':'');
+      if(!fitted.fits){setStatus('紙面に収まらない長い項目があります。シートの講座内容・注意事項をご確認ください。内容の欠落を防ぐため出力を停止しています。','error');return;}
+      setPrintable(true);setStatus(`${rows.length}件のプランを${fitted.pages}ページで表示しています。${unknown?'単価未設定のプランは「料金確認中」です。':''} 印刷・PDF保存できます。`,unknown?'warning':'');
     }catch(error){unavailable(error.message);}
   }
   function loadApi(){
