@@ -57,30 +57,40 @@
     });
     return {text:unknown?'料金確認中':currency.format(total),unknown};
   }
-  function fit(paper=$('paper')){
+  function fit(paper=$('paper'),expand=false){
     const table=paper.querySelector('table'),wrap=paper.querySelector('.table-wrap'),notes=paper.querySelector('.paper-notes');
-    let body=13,note=12;
+    let body=expand?18:13,note=12,padding=1.5;
+    paper.style.setProperty('--row-padding',`${padding}px`);
     paper.style.setProperty('--body-size',`${body}px`);paper.style.setProperty('--note-size',`${note}px`);
     while(table.getBoundingClientRect().height>wrap.getBoundingClientRect().height+.5&&body>8.5){body-=.25;paper.style.setProperty('--body-size',`${body}px`);}
     while(notes.scrollHeight>notes.clientHeight+1&&note>8.5){note-=.25;paper.style.setProperty('--note-size',`${note}px`);}
+    if(expand){
+      while(padding<12&&table.getBoundingClientRect().height<wrap.getBoundingClientRect().height*.94){
+        padding+=.5;paper.style.setProperty('--row-padding',`${padding}px`);
+        if(table.getBoundingClientRect().height>wrap.getBoundingClientRect().height+.5){padding-=.5;paper.style.setProperty('--row-padding',`${padding}px`);break;}
+      }
+    }
     const fitsHeight=table.getBoundingClientRect().height<=wrap.getBoundingClientRect().height+.5&&notes.scrollHeight<=notes.clientHeight+1;
     const fitsWidth=[...paper.querySelectorAll('td,th')].every((cell)=>cell.scrollWidth<=cell.clientWidth+1);
     return {fits:fitsHeight&&fitsWidth,font:body,tableFits:table.getBoundingClientRect().height<=wrap.getBoundingClientRect().height+.5};
   }
   function paginate(){
     const first=$('paper'),rows=[...first.querySelector('tbody').children];
+    first.dataset.paginated='false';
+    const grades=new Map();
+    rows.forEach(row=>{const grade=row.cells[0].textContent;if(!grades.has(grade))grades.set(grade,[]);grades.get(grade).push(row);});
     first.querySelector('tbody').replaceChildren();let paper=first,pages=1;
-    for(const row of rows){
-      const tbody=paper.querySelector('tbody');tbody.append(row);
-      if(!fit(paper).tableFits&&tbody.children.length>1){
-        row.remove();fit(paper);
+    for(const group of grades.values()){
+      const tbody=paper.querySelector('tbody'),previous=tbody.children.length;tbody.append(...group);
+      if(!fit(paper).tableFits&&previous>0){
+        group.forEach(row=>row.remove());fit(paper);
         const frame=$('paper-frame').cloneNode(true);frame.removeAttribute('id');frame.classList.add('extra-page');
         frame.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
-        paper=frame.querySelector('.paper');paper.querySelector('tbody').replaceChildren(row);
+        paper=frame.querySelector('.paper');paper.querySelector('tbody').replaceChildren(...group);
         $('paper-frame').parentElement.append(frame);pages++;resize();fit(paper);
       }
     }
-    const fits=[...document.querySelectorAll('.paper-frame .paper')].every(p=>fit(p).fits);
+    const fits=[...document.querySelectorAll('.paper-frame .paper')].map(p=>{p.dataset.paginated=String(pages>1);return fit(p,pages>1);}).every(result=>result.fits);
     return {fits,pages};
   }
   function chooseBackground(){

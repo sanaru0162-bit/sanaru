@@ -3,7 +3,7 @@
 
 td.lesson-description{text-align:left}
 .plan-table{line-height:1.25}.plan-table th,.plan-table td{padding:2px 4px}.plan-table td.course small{display:inline;margin-left:4px}
-.plan-table th,.plan-table td{padding-top:1.5px;padding-bottom:1.5px}
+.plan-table th,.plan-table td{padding-top:var(--row-padding,1.5px);padding-bottom:var(--row-padding,1.5px)}
 
 /* Opaque white frames cover all original printed text; sheet data is rendered above them. */
 .paper[data-layout]:not([data-layout="winter"]) .content{left:var(--table-left);right:auto;top:var(--table-top);width:var(--table-width);height:var(--table-height);background:white;padding:8px;border:1px solid #193650}
@@ -35,5 +35,8 @@ td.lesson-description{text-align:left}
 .paper[data-layout="winter"] .paper-notes li{margin-bottom:0}
 .paper[data-layout="winter"][data-school="middle"] .paper-notes{left:6%;right:17%;top:83.5%;height:10%}
 .paper[data-layout="winter"][data-school="high"] .paper-notes{left:6%;right:18%;top:83.5%;height:8.5%}
+.paper[data-layout="winter"][data-paginated="true"][data-school="elementary"] .content{height:48%}
+.paper[data-layout="winter"][data-paginated="true"][data-school="middle"] .content{height:44.5%}
+.paper[data-layout="winter"][data-paginated="true"][data-school="high"] .content{height:40.5%}
 .school-buttons{display:flex;flex-wrap:wrap;gap:8px}.school-button{padding:10px 12px;background:white;color:#183449;border:1px solid #8fa7bc;border-radius:4px;cursor:pointer}.school-button[aria-pressed="true"]{background:#e7f2ff;border-color:#0054a6;color:#0054a6;font-weight:700}.school-button:disabled{opacity:.45;cursor:not-allowed}.school-button:focus-visible{outline:3px solid #e5a900;outline-offset:3px}
 @media print{.extra-page{position:relative;margin:0!important;width:297mm!important;height:210mm!important;break-before:page;page-break-before:always}.extra-page .paper{position:relative;transform:none!important}.paper-frame{break-inside:avoid;page-break-inside:avoid}}
